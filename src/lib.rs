@@ -84,18 +84,18 @@ pub mod calendar {
         }
     }
 
-    // Determina si un año es bisiesto
+    // Determines whether a year is a leap year
     pub fn is_leap(year: Year) -> bool {
         (year % 4 == 0 && year % 100 != 0) || year % 400 == 0
     }
 
-    // Obtiene la cantidad de días de un mes determinado
+    // Gets the number of days in a given month
     pub fn days_in_month(year: Year, month: Month) -> Option<u8> {
         if month < Month::January || month > Month::December {
             return None;
         }
     
-        // Validar el año.
+        // Validate year range
         if year < 0001 || year > 9999 {
             return None;
         }
@@ -118,7 +118,7 @@ pub mod calendar {
         Some(n_days)
     }
 
-    // Crea un vector de tamaño dado lleno con un valor BiDay
+    // Creates a vector of given size filled with a BiDay value
     pub fn generate_vec_days(size: usize, value: BiDay) -> Vec<BiDay> {
         let mut vec = Vec::with_capacity(size);
         vec.resize(size, value);
@@ -126,7 +126,7 @@ pub mod calendar {
     }
 
     impl DaysCalendar<BiDay> {
-        // Crea un DaysCalendar de un único mes
+        // Create a DaysCalendar of a single year month
         pub fn singleton(year: Year, month: Month) -> Option<DaysCalendar<BiDay>> {
             if let Some(n_days) = days_in_month(year, month) {
                 let mut days_calendar: Vec<(Year, Month, Vec<BiDay>)> = Vec::new();
@@ -137,11 +137,11 @@ pub mod calendar {
                 None
             }
         }
-        // Crea un DaysCalendar a partir de datos brutos
+        // Creates a new DaysCalendar from raw data
         pub fn new(data: Vec<(Year, Month, Vec<BiDay>)>) -> Self {
             Self { days_calendar: data }
         }
-        // Crea un DaysCalendar vacío
+        // Create an empty DaysCalendar
         pub fn empty() -> DaysCalendar<BiDay> {
             DaysCalendar {
                 days_calendar: Vec::new(),
@@ -179,7 +179,7 @@ pub mod calendar {
             resume(&combined_days, |a, b| nomatch_biday_operation(a, b))
         }
         
-        // Obtiene los días de un mes determinado
+        // Gets the days of a given month as BiDay
         fn get_days(&self, year: Year, month: Month) -> Option<&Vec<BiDay>> {
             self.days_calendar.iter().find_map(|(y, m, days)| {
                 if *y == year && *m == month {
@@ -190,7 +190,7 @@ pub mod calendar {
             })
         }
         
-        // Encuentra el próximo día en el calendario después de una fecha dada
+        // Finds the next day on the calendar after a given date
         pub fn next_day(&self, year: Year, month: Month, day: Day) -> Option<Date> {
             let reference_date = Date::from_calendar_date(year.into(), month.to_time_month(), day).ok()?;
     
@@ -207,7 +207,7 @@ pub mod calendar {
             next_date
         }
 
-        // Encuentra el día anterior en el calendario antes de una fecha dada 
+        // Finds the previous day in the calendar before a given date 
         pub fn previous_day(&self, year: Year, month: Month, day: Day) -> Option<Date> {
             let reference_date = Date::from_calendar_date(year.into(), month.to_time_month(), day).ok()?;
     
@@ -224,7 +224,7 @@ pub mod calendar {
             previous_date
         }
 
-        // Busca el día n-ésimo después/antes de una fecha dada
+        // Searches for the n-th day after/before a given date
         pub fn seek_nth_day(&self, year: Year, month: Month, day: Day, mut n: isize) -> Option<Date> {
             let reference_date = Date::from_calendar_date(year.into(), month.to_time_month(), day).ok()?;
     
@@ -258,7 +258,7 @@ pub mod calendar {
             target_date
         }
 
-        
+        // Filter a calendar by keeping only the specified days of the week
         pub fn and_weekdays(&self, weekdays: HashSet<Weekday>) -> DaysCalendar<BiDay> {
             let mut filtered_days_calendar = vec![];
     
@@ -284,6 +284,7 @@ pub mod calendar {
             }
         }
 
+        // Add specified days of the week to a calendar
         pub fn or_weekdays(&self, weekdays: HashSet<Weekday>) -> DaysCalendar<BiDay> {
             let mut filtered_days_calendar = vec![];
     
@@ -309,6 +310,7 @@ pub mod calendar {
             }
         }
 
+        // Filters a calendar by keeping only the specified ISO weeks
         pub fn and_iso_weeks(&self, weeks: Vec<u32>) -> DaysCalendar<BiDay> {
             let mut new_calendar = self.clone();
     
@@ -329,7 +331,7 @@ pub mod calendar {
             new_calendar
         }
 
-
+        // Adds specified ISO weeks to a calendar
         pub fn or_iso_weeks(&self, weeks: Vec<u32>) -> DaysCalendar<BiDay> {
             let mut new_calendar = self.clone();
     
@@ -399,6 +401,7 @@ pub mod calendar {
 
     }
 
+    // Replicates a pattern of days in a calendar
     pub fn replicate<T>(pattern: &[BiDay], calendar: DaysCalendar<BiDay>) -> DaysCalendar<BiDay>
     where T: Clone
     {
@@ -491,7 +494,7 @@ pub mod calendar {
         }
     }
 
-
+    // Consult a calendar and consolidate days by year and month
     pub fn query_year_consolidate<T>(y: Year, dc: &DaysCalendar<T>) -> HashMap<(Year, Month), Vec<T>>
     where
         T: Copy,
@@ -525,7 +528,7 @@ pub mod calendar {
         year_vec
     }
 
-    //eymc
+    // Extracts the years and months present in a calendar
     pub fn extract_year_month_calendar<T: Clone>(dc: &DaysCalendar<T>) -> Vec<(Year, Month)>
     where 
         T: Clone,
@@ -539,18 +542,19 @@ pub mod calendar {
         result
     }
 
+    // Extracts the days of a specific month in a calendar
     pub fn extract_day_month_calendar<T: Clone>(
         year: Year,
         month: Month,
         dc: &DaysCalendar<T>,
     ) -> Option<Vec<T>> {
-        // Buscamos el índice del elemento que coincide con el año y mes dados
+        // Finds the index of the element matching the given year and month
         let index = dc.days_calendar.binary_search_by_key(&(year, month), |(y, m, _)| (*y, *m));
-        // Si se encuentra el elemento, se devuelve el vector de días correspondiente
+        // If the element is found, the corresponding vector of days is returned.
         if let Ok(index) = index {
             Some(dc.days_calendar[index].2.clone())
         } else {
-            None // Si no se encuentra, devolvemos None
+            None
         }
     }
 
@@ -658,17 +662,17 @@ pub mod calendar {
     use itertools::Itertools;
 
     pub fn group_days_calendar<T: Clone>(calendar: DaysCalendar<T>) -> Vec<(Year, Month, Vec<Vec<T>>)> {
-        // Agrupar los días por año y mes
+        // Group days by year and month
         let groups = calendar.days_calendar.iter().group_by(|(year, month, _)| (*year, *month));
 
-        // Iterar sobre los grupos y generar la nueva estructura
+        // Iterate on the groups and generate the new structure
         let mut result = Vec::new();
         for ((year, month), group) in groups.into_iter() {
             let days: Vec<Vec<T>> = group.map(|(_, _, days)| days.clone()).collect();
             result.push((year, month, days));
         }
 
-        // Ordenar por año y mes
+        // Sort by year and month
         result.sort_by(|(year1, month1, _), (year2, month2, _)| {
             year1.cmp(year2).then_with(|| month1.cmp(month2))
         });
@@ -776,6 +780,7 @@ pub mod calendar {
         result
     }
 
+    // Convert a DaysCalendar calendar from BiDay to Day days
     pub fn to_day<T>(calendar: DaysCalendar<BiDay>) -> DaysCalendar<Day> {
         let mut result = DaysCalendar {
             days_calendar: Vec::new(),
@@ -802,6 +807,7 @@ pub mod calendar {
         result
     }
 
+    // Convert a DaysCalendar DaysCalendar from Day days to BiDay days
     pub fn from_day(calendar: DaysCalendar<Day>) -> DaysCalendar<BiDay> {
         let mut result = DaysCalendar {
             days_calendar: Vec::new(),
@@ -829,7 +835,7 @@ pub mod calendar {
         }
 
         pub fn sort(&mut self) {
-            // Ordenar days_calendar por Year y Month.
+            // Sort days_calendar by Year and Month
             self.days_calendar.sort_unstable_by(|(y1, m1, _), (y2, m2, _)| {
                 if y1 == y2 {
                     m1.cmp(m2)
@@ -838,17 +844,17 @@ pub mod calendar {
                 }
             });
     
-            // Ordenar los días de cada entrada.
+            // Order the days of each entry
             for (_, _, days) in &mut self.days_calendar {
                 days.sort_unstable();
             }
         }
     
         pub fn contains(&mut self, year: Year, month: Month, day: Day) -> bool {
-            // Ordenar days_calendar antes de realizar la búsqueda binaria.
+            // Sort days_calendar before performing binary search
             self.sort();
     
-            // Realizar una búsqueda binaria en days_calendar para encontrar el año y mes dados.
+            // Perform a binary search on days_calendar to find the given year and month
             let index = self.days_calendar.binary_search_by(|&(y, m, _)| {
                 if y == year {
                     m.cmp(&month)
@@ -857,7 +863,7 @@ pub mod calendar {
                 }
             });
     
-            // Si se encuentra un elemento con el año y mes dados, verificar si contiene el día.
+            // If an item is found with the given year and month, check if it contains the day
             match index {
                 Ok(i) => self.days_calendar[i].2.contains(&day),
                 Err(_) => false,
@@ -867,6 +873,7 @@ pub mod calendar {
 
     use std::convert::TryInto;
 
+    // Converts a DaysCalendar into a Date vector
     pub fn to_date(calendar: DaysCalendar<BiDay>) -> Vec<Date> {
         let total_days = calendar
             .days_calendar
@@ -893,11 +900,12 @@ pub mod calendar {
 
     use std::collections::BTreeMap;
 
+    // CConverts a Date date vector to a DaysCalendar calendar
     pub fn from_date(dates: Vec<Date>) -> DaysCalendar<Day> {
-        // Crear un mapa ordenado para almacenar los años, meses y días.
+        // Create an orderly map for storing years, months and days
         let mut year_month_map: BTreeMap<(Year, u8), Vec<Day>> = BTreeMap::new();
     
-        // Iterar sobre las fechas dadas y agregarlas al mapa.
+        // Iterate over the given dates and add them to the map
         for date in dates {
             let entry = year_month_map
                 .entry((date.year().try_into().unwrap(), date.month().into()))
@@ -908,23 +916,23 @@ pub mod calendar {
             }
         }
     
-        // Ordenar y eliminar duplicados de los días en cada mes del mapa.
+        // Sort and delete duplicate days in each month on the map
         for days in year_month_map.values_mut() {
             days.sort_unstable();
             days.dedup();
         }
     
-        // Convertir el mapa a un vector de tuplas (Year, Month, Vec<Day>).
+        // Convert map to a vector of tuples (Year, Month, Vec<Day>)
         let days_calendar: Vec<(Year, Month, Vec<Day>)> = year_month_map
             .into_iter()
             .map(|((year, month_number), days)| (year, Month::from_index(month_number).unwrap(), days))
             .collect();
     
-        // Devolver DaysCalendar<Day>.
+        // Return DaysCalendar<Day>
         DaysCalendar { days_calendar }
     }
 
-    //Add or substract n to dates
+    // Adds or subtracts days to a date vector
     pub fn add_days(dates: Vec<Date>, n: i32) -> Vec<Date> {
         let duration = Duration::days(n.abs() as i64);
         dates
@@ -943,7 +951,6 @@ pub mod calendar {
         Union,
         Intersection,
         Difference,
-        // Agrega más operaciones según sea necesario
     }
 
     pub enum RuleOperation {
@@ -969,7 +976,6 @@ pub mod calendar {
         WeekOfMonth(Vec<u8>, RuleOperation),
         SpecificMonths(Vec<Month>, RuleOperation)
 
-        // Agregar más reglas aquí según sea necesario
     }
     
     pub struct PeriodicCalendar {

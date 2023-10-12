@@ -17,10 +17,6 @@ time = {version="0.3.20", features=["macros"]}
 name = "dayendar"
 path = "src/lib.rs"
 
-[[bin]]
-name = "dayendar-cli"
-path = "src/main.rs"
-
 [[test]]
 name = "dayscal_test"
 path = "test/dayscal_test.rs"
