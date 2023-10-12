@@ -1,8 +1,8 @@
 # Dayendar
 
-![Version](https://img.shields.io/badge/version-0.1.0-blue)
+![Version](https://img.shields.io/badge/version-0.1.1-blue)
 
-Welcome to the "Dayendar" crate. This is version 0.1.0 and it's currently in active development.
+Welcome to the "Dayendar" crate. This is version 0.1.1 and it's currently in active development.
 
 Dayendar implements advanced operations for working with calendars in Rust. The most important parts I highlight are:
 
