@@ -1,0 +1,39 @@
+[package]
+name = "dayendar"
+version = "0.1.0"
+edition = "2021"
+authors = ["Raciel Hernández <kf5h6yu6@duck.com>"]
+description = "Dayendar for advanced days calendar operations"
+license = "MIT"
+readme = "README.md"
+keywords = ["scheduling", "calendar", "rex", "rust"]
+categories = ["scheduling", "calendar"]
+
+[dependencies]
+itertools = "0.11.0"
+time = {version="0.3.20", features=["macros"]}
+
+[lib]
+name = "dayendar"
+path = "src/lib.rs"
+
+[[bin]]
+name = "dayendar-cli"
+path = "src/main.rs"
+
+[[test]]
+name = "dayscal_test"
+path = "test/dayscal_test.rs"
+
+[[bench]]
+name = "calendar"
+path = "bench/calendar.rs"
+harness = false
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+
+[dev-dependencies]
+criterion = "0.5.1"
