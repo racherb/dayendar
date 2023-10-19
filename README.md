@@ -9,9 +9,17 @@ Rust Library for Advanced and Efficient Calendar Operations.
 [![dependency status](https://deps.rs/repo/github/racherb/dayendar/status.svg)](https://deps.rs/repo/github/racherb/dayendar)
 [![coverage](https://shields.io/endpoint?url=https://racherb.github.io/dayendar/coverage.json)](https://racherb.github.io/dayendar/index.html)
 
+## Why Dayendar
+
+There are three reasons:
+
+- There is currently no robust and complete library for working with calendars in Rust that uses the DaysCalendar structure. This makes it a unique and valuable solution.
+- It provides high-level operators and utilities specific for calendar manipulation that are not available in standard libraries.
+- Its DaysCalendar representation and data structures are optimized for performance in common calendar tasks like combining, filtering, finding days, etc.
+
 ## Features
 
-- Flexible calendar representation as DaysCalendar<T> allows modeling days in different forms (BiDay, Day, etc).
+- Flexible calendar representation as **DaysCalendar<T>** allows modeling days in different forms (BiDay, Day, etc).
 - Powerful operators to combine and transform calendars efficiently. Allows creating complex calendars from simpler ones.
 - Advanced filtering by ISO week, weekday, etc. Useful for applications like schedules, availability, etc.
 - Contains utilities for normalizing, inverting, finding previous/next days that ease common calendar manipulation tasks.
@@ -36,15 +44,57 @@ dayendar = "0.1.2"
 
 ## Usage
 
+**Example**: Jhon must come to the office on Mondays and Thursdays during the month of January 2023. Except on days when his boss has a board meeting. How do you plan ahead for John's visits to the office during January? Please note that the 30th and 31st are public holidays.
+
+**Rust Solution using Struct DaysCalendar**:
+
 ```rust
-use calendar::{DaysCalendar, BiDay};
+use dayendar::types::{Month, Weekday};
+use dayendar::calendar::{
+    DaysCalendar,
+    from_day,
+    biday_to_vec_day
+};
 
-let weekdays = DaysCalendar::singleton(2022, 1)
-    .and_weekdays(vec![Weekday::Mon, Weekday::Tue])
-    .biday_to_vec_day();
+use std::collections::HashSet;
 
-println!("Weekdays in January 2022: {:?}", weekdays);
+fn main() {
 
+    let mut jhon_base_calendar = HashSet::new();
+    jhon_base_calendar.insert(Weekday::Monday);
+    jhon_base_calendar.insert(Weekday::Tuesday);
+
+    let boss_board_meeting = vec![(2023, Month::January, vec![9, 11, 13, 16, 23, 24, 28])];
+
+    let boss_board_meeting_calendar = from_day(
+        DaysCalendar {
+            days_calendar: boss_board_meeting
+        }
+    );
+
+    let fest_days = from_day(
+        DaysCalendar {
+            days_calendar: vec![(2023, Month::January, vec![25, 30, 31])]
+        }
+    );
+
+    let jhon_office_visit_schedule = DaysCalendar::singleton(2023, Month::January).unwrap()
+      .and_weekdays(jhon_base_calendar)
+      .minus(&boss_board_meeting_calendar)
+      .minus(&fest_days);
+
+    let forecast = biday_to_vec_day(jhon_office_visit_schedule.clone());
+    
+    println!("\nForecast: Calendar of available options\n {:?}\n", forecast);
+
+}
+
+```
+
+To see more examples run explore the "examples" folder of the project or simply run:
+
+```bash
+cargo run --example <example_name>
 ```
 
 ## Documentation
