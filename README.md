@@ -1,95 +1,72 @@
-# Dayendar
+# Dayendar = Days + Calendar
 
-![Version](https://img.shields.io/badge/version-0.1.1-blue)
+## Description
+
+Rust Library for Advanced and Efficient Calendar Operations.
+
+![Version](https://img.shields.io/badge/version-0.1.2-blue)
+[![Rust Report Card](https://rust-reportcard.xuri.me/badge/github.com/racherb/dayendar)](https://rust-reportcard.xuri.me/report/github.com/racherb/dayendar)
+[![dependency status](https://deps.rs/repo/github/racherb/dayendar/status.svg)](https://deps.rs/repo/github/racherb/dayendar)
 [![coverage](https://shields.io/endpoint?url=https://racherb.github.io/dayendar/coverage.json)](https://racherb.github.io/dayendar/index.html)
 
-Welcome to the "Dayendar" crate. This is version 0.1.1 and it's currently in active development.
+## Features
 
-Dayendar implements advanced operations for working with calendars in Rust. The most important parts I highlight are:
+- Flexible calendar representation as DaysCalendar<T> allows modeling days in different forms (BiDay, Day, etc).
+- Powerful operators to combine and transform calendars efficiently. Allows creating complex calendars from simpler ones.
+- Advanced filtering by ISO week, weekday, etc. Useful for applications like schedules, availability, etc.
+- Contains utilities for normalizing, inverting, finding previous/next days that ease common calendar manipulation tasks.
+- Designed with Rust, focused on performance and safety. Use of data structures like Vec, HashSet, BTreeMap provides efficiency.
+- Well documented with Doc comments. Easy to understand and extend.
+- Open source, implementations can be inspected and contributed to.
 
-- It allows creating DaysCalendar calendars from different data sources such as date vectors, individual months, binary patterns, etc.
+## Instalation
 
-- It provides functions to query and extract information from calendars such as years, months and present days.
+With Rust Cargo:
 
-- It has ```or```, ```and```, ```not```, ```match```, ```nomatch``` and others operations to modify calendars or combine calendars, as well as filtering by days of the week or ISO weeks, adding days, replicating patterns, etc.
+```bash
+cargo add dayendar
+```
 
-- Conversion functions between different calendar and date representations (DaysCalendar, Date vectors, BiDay and Day days).
-
-In general, it allows to create and manipulate calendars in a flexible and powerful way, performing operations both at bit level (BiDay) and with more abstract representations (Date dates).
-
-## ⚠️ Warning ⚠️
-
-The API of "Dayendar" is unstable at this stage. It is under active development, which means there might be significant changes at any time.
-
-### Use at Your Own Risk
-
-By using this crate, you acknowledge that there are associated risks due to its instability. Should you choose to use it, it is at your own discretion and responsibility. It's recommended not to use it in production environments until the API becomes stable.
-
-## Installation
-
-To add "Dayendar" to your project, add the following line to your `Cargo.toml` file:
+Or add the following line to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-dayendar = "0.1.0"
+dayendar = "0.1.2"
 ```
 
-## Contributions
+## Usage
 
-If you wish to contribute to the development of "Dayendar", we encourage you to do so! Please read the contribution guidelines before submitting your changes.
-Please note that contributions must be signed. Sign commits by adding ```-S``` option when you execute ```git commit```.
+```rust
+use calendar::{DaysCalendar, BiDay};
 
-## Governance
+let weekdays = DaysCalendar::singleton(2022, 1)
+    .and_weekdays(vec![Weekday::Mon, Weekday::Tue])
+    .biday_to_vec_day();
 
-The project is governed under a meritocracy model documented in GOVERNANCE.md.
+println!("Weekdays in January 2022: {:?}", weekdays);
 
-Maintainers are responsible for reviewing, approving and managing changes, seeking consensus with the community.
-
-Technical decisions follow the process detailed in GOVERNANCE.md.
-
-Changes to governance itself must be approved by at least 2/3 of maintainers.
-
-Participation of all community members is encouraged through issues, PRs, code reviews and patches.
-
-Active members demonstrating valuable contributions and good technical judgement may be invited to become maintainers. See criteria in GOVERNANCE.md.
-
-This section links to detailed information but summarizes the governance structure to make it visible and understandable to the community. It can be adapted and improved based on project member feedback.
-
-## Generating a GPG key and configuring Git for Signed Commit
-
-Install GPG. On Linux and Mac it generally comes preinstalled. On Windows you can install it through Gpg4win.
-Generate your GPG key:
-
-```bash
-gpg --full-generate-key
 ```
 
-Follow the prompts. It's recommended to use an email associated with your GitHub/GitLab account and a secure password.
+## Documentation
 
-Verify that the key has been generated:
+Full documentation can be found at [https://docs.rs/dayendar](https://docs.rs/dayendar)
 
-```bash
-gpg --list-secret-keys --keyid-format LONG
-```
+## Contributing
 
-This will list the private keys generated. Copy the ID of the key.
+PRs are welcome! Please open an issue first to discuss any major changes.
 
-Export the public key:
+If you would like to contribute to the development of "**Dayendar**", we encourage you to do so!
 
-```bash
-gpg --armor --export YOUR_KEY_ID
-```
+Please read the contribution guidelines defined in [CONTRIBUTING](CONTRIBUTING.md) before submitting your changes, read also our governance guideline [GOBERNANCE](GOBERNANCE.md) and our code of conduct [CODE OF CONDUCT](CODE_OF_CONDUCT.md).
 
-This will generate your public key in ASCII format.
+Please note that contributions must be signed. Sign commits by adding the ```-S`` option when executing:
 
-Add the public key to GitHub/GitLab by pasting the result in the GPG keys section.
+ ```bash
+ git commit -S -m "Your comment"
+ ```
 
-Configure Git to use this key:
+Important: To sign your contributions you will need to set up a GPG key and configure Git as described in the [GENERATING GPG KEY](GENERATING_GPG_KEY.md) document.
 
-```bash
-git config --global user.signingkey YOUR_KEY_ID
-git config --global commit.gpgsign true
-```
+## License
 
-Sign commits by adding -S when you git commit.
-With this Git will be configured to sign all commits with your generated GPG key.
+Apache-2
