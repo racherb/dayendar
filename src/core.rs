@@ -11,7 +11,7 @@ pub mod calendar {
     use crate::binary::{
         or_biday_operation, and_biday_operation,
         match_biday_operation, nomatch_biday_operation,
-        replicate_pattern, normalize_biday, 
+        replicate_pattern, normalize_biday, minus_biday_operation
 
     };
     use crate::types::{
@@ -74,6 +74,12 @@ pub mod calendar {
         pub fn and(&self, other: &Self) -> DaysCalendar<BiDay> {
             let combined_days = self.append(other);
             resume(&combined_days, and_biday_operation)
+        }
+
+        /// Combines two DaysCalendar types based on the SUSTRACT operator
+        pub fn minus(&self, other: &Self) -> DaysCalendar<BiDay> {
+            let combined_days = self.append(other);
+            resume(&combined_days, minus_biday_operation)
         }
 
         /// Combines two DaysCalendar types based on calendar matches
