@@ -1,6 +1,6 @@
 [package]
 name = "dayendar"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = ["Raciel Hernández <kf5h6yu6@duck.com>"]
 description = "Dayendar for advanced days calendar operations"
@@ -8,6 +8,9 @@ license = "Apache-2"
 readme = "README.md"
 keywords = ["scheduling", "calendar", "date"]
 categories = ["data-structures"]
+#rust-version = "1.56"
+repository = "https://github.com/racherb/dayendar"
+documentation = "https://docs.rs/dayendar"
 
 [dependencies]
 itertools = "0.11.0"
