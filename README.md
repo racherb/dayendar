@@ -7,7 +7,6 @@ Rust Library for Advanced and Efficient Calendar Operations.
 ![Version](https://img.shields.io/badge/version-0.1.2-blue)
 [![Rust Report Card](https://rust-reportcard.xuri.me/badge/github.com/racherb/dayendar)](https://rust-reportcard.xuri.me/report/github.com/racherb/dayendar)
 [![dependency status](https://deps.rs/repo/github/racherb/dayendar/status.svg)](https://deps.rs/repo/github/racherb/dayendar)
-[![coverage](https://shields.io/endpoint?url=https://racherb.github.io/dayendar/coverage.json)](https://racherb.github.io/dayendar/index.html)
 
 ## Why Dayendar
 
@@ -44,7 +43,27 @@ dayendar = "0.1.2"
 
 ## Usage
 
-**Example**: Jhon must come to the office on Mondays and Thursdays during the month of January 2023. Except on days when his boss has a board meeting. How do you plan ahead for John's visits to the office during January? Please note that the 30th and 31st are public holidays.
+```rust
+use dayendar::types::{Month, BiDay};
+use dayendar::calendar::{DaysCalendar, replicate};
+
+fn main() {
+
+    let pattern: [BiDay; 2] = [BiDay::One, BiDay::Zero]; // pattern: One day on, the next day off.
+    
+    let my_calendar = replicate::<BiDay>(&pattern, DaysCalendar::singleton
+        ( 2024, Month::January
+        ).unwrap()
+    );
+
+    println!("\n {:?}\n", my_calendar);
+
+}
+```
+
+## Example
+
+**Case**: Jhon must come to the office on Mondays and Thursdays during the month of January 2023. Except on days when his boss has a board meeting. How do you plan ahead for John's visits to the office during January? Please note that the 30th and 31st are public holidays.
 
 **Rust Solution using Struct DaysCalendar**:
 
@@ -91,7 +110,7 @@ fn main() {
 
 ```
 
-To see more examples run explore the "examples" folder of the project or simply run:
+To see more examples, explore the "examples" folder of the project or simply run:
 
 ```bash
 cargo run --example <example_name>
@@ -103,19 +122,25 @@ Full documentation can be found at [https://docs.rs/dayendar](https://docs.rs/da
 
 ## Contributing
 
+### Collaborate with us, you're welcome
+
 PRs are welcome! Please open an issue first to discuss any major changes.
 
 If you would like to contribute to the development of "**Dayendar**", we encourage you to do so!
 
 Please read the contribution guidelines defined in [CONTRIBUTING](CONTRIBUTING.md) before submitting your changes, read also our governance guideline [GOBERNANCE](GOBERNANCE.md) and our code of conduct [CODE OF CONDUCT](CODE_OF_CONDUCT.md).
 
-Please note that contributions must be signed. Sign commits by adding the ```-S`` option when executing:
+Please note that contributions must be signed. Sign commits by adding the `-S` option when executing `commit`:
 
  ```bash
  git commit -S -m "Your comment"
  ```
 
 Important: To sign your contributions you will need to set up a GPG key and configure Git as described in the [GENERATING GPG KEY](GENERATING_GPG_KEY.md) document.
+
+### We are looking for new maintainers
+
+If you want to be part of Dayendar's team of maintainers then generate a PR in the document [OWNERS.md](OWNERS.md) and leave us your details. We will contact you as soon as possible.
 
 ## License
 
