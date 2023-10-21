@@ -27,8 +27,11 @@ jobs:
     - name: Run tests
       run: LLVM_PROFILE_FILE="dayendar-%p-%m.profraw" cargo test --verbose
     - name: Run_grcov
-      run: grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info
+      run: grcov . --binary-path ./target/debug/ -t lcov -s . --token df17b3cc-b591-4529-8b25-fcb15bed229f > lcov.info
+    - name: Install codecov client
+      run: bash <(curl -s https://codecov.io/bash)
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3
+      run: bash <(curl -s https://codecov.io/bash) -f lcov.info
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
