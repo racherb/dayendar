@@ -318,7 +318,7 @@ pub mod calendar {
                 days_calendar: filtered_days_calendar,
             }
         }
-        
+
         /// Generates a `DaysCalendar` type with `Zero` values of `BiDay`
         pub fn zeros(self) -> DaysCalendar<BiDay> {
             let pattern: [BiDay; 1] = [BiDay::Zero];
@@ -4575,6 +4575,52 @@ mod tests_calendar {
             ),
         ];
         assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_get_days_present() {
+        let calendar = DaysCalendar {
+            days_calendar: vec![
+                (2023, Month::January, vec![BiDay::One, BiDay::Zero, BiDay::One]),
+                (2023, Month::February, vec![BiDay::Zero, BiDay::Zero]),
+            ],
+        };
+
+        let days = calendar.get_days(2023, Month::January);
+        assert_eq!(days, Some(&vec![BiDay::One, BiDay::Zero, BiDay::One]));
+    }
+
+    #[test]
+    fn test_get_days_absent() {
+        let calendar = DaysCalendar {
+            days_calendar: vec![
+                (2023, Month::January, vec![BiDay::One, BiDay::Zero, BiDay::One]),
+            ],
+        };
+
+        let days = calendar.get_days(2023, Month::February);
+        assert_eq!(days, None);
+    }
+
+    #[test]
+    fn test_get_days_data_integrity() {
+        let calendar = DaysCalendar {
+            days_calendar: vec![
+                (2023, Month::January, vec![BiDay::One, BiDay::Zero, BiDay::One]),
+                (2023, Month::February, vec![BiDay::Zero, BiDay::Zero]),
+            ],
+        };
+
+        let days_jan = calendar.get_days(2023, Month::January).unwrap();
+        assert_eq!(days_jan.len(), 3);
+        assert_eq!(days_jan[0], BiDay::One);
+        assert_eq!(days_jan[1], BiDay::Zero);
+        assert_eq!(days_jan[2], BiDay::One);
+
+        let days_feb = calendar.get_days(2023, Month::February).unwrap();
+        assert_eq!(days_feb.len(), 2);
+        assert_eq!(days_feb[0], BiDay::Zero);
+        assert_eq!(days_feb[1], BiDay::Zero);
     }
 
 

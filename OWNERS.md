@@ -7,14 +7,14 @@ This document records the current project owners of Project **Dayendar** with ad
 | Name | GitHub | Role |
 |-------------------|---------------|-----------------|
 | Raciel Hernández | @racherb | Project Leader  |
-| John Doe | @john | Maintainer      |
+| YOUR NAME | @GITHUB | Maintainer      |
 
 ### Raciel Hernández
 
 - GitHub: @racherb
 - Email:  kf5h6yu6 at duck.com
 
-Raciel is the project leader. She has access to:
+Raciel is the project leader. He has access to:
 
 - GitHub repository (admin)
 - Domain records

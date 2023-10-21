@@ -24,6 +24,7 @@ If, for any reason, you need to deviate from the style guide, you must clearly d
 // rustfmt::skip
 // This section is skipped from rustfmt due to [specific reason]
 ...
+
 ```
 
 ## Developer Certificate of Origin (DCO)
@@ -44,10 +45,15 @@ All commits contributed to this project must be signed-off. By signing off with 
 
  Note that the "Signed-off-by" line is important, and Git has a '-s' command line option to add it automatically.
 
+## Testing Policy for New Functionality
+
+To maintain the quality and stability of our project, it is essential that each major new feature is accompanied by relevant testing. Before submitting a change proposal that includes new functionality, please ensure that you also include testing for that functionality in our automated test suite.
+
 ## How to Contribute
 
 1. First discuss the change you wish to make via issue, email, or any other method with the owners of this repository
-2. Fork the Repository: Fork the repository on your GitHub account.
-3. Clone and Create a Branch: Clone the repository on your local machine and create a branch for your new feature or fix.
-4. Make Your Changes: Make your changes and be sure to run `rustfmt` before committing.
-5. Submit a Pull Request: Once you've completed your changes and ensured they meet the coding standards, submit a pull request to the original repository.
+2. If you are introducing important new functionality, it is essential that you include appropriate tests for that functionality in your proposal.
+3. Fork the Repository: Fork the repository on your GitHub account.
+4. Clone and Create a Branch: Clone the repository on your local machine and create a branch for your new feature or fix.
+5. Make Your Changes: Make your changes and be sure to run `rustfmt` before committing.
+6. Submit a Pull Request: Once you've completed your changes and ensured they meet the coding standards, submit a pull request to the original repository.

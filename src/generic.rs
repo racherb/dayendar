@@ -126,6 +126,29 @@ pub mod types {
             assert_eq!(BiDay::from_u8(1), Some(BiDay::One));
             assert_eq!(BiDay::from_u8(2), None);
         }
+
+        #[test]
+        fn test_from_index_valid_values() {
+            assert_eq!(Month::from_index(1), Some(Month::January));
+            assert_eq!(Month::from_index(2), Some(Month::February));
+            assert_eq!(Month::from_index(3), Some(Month::March));
+            assert_eq!(Month::from_index(4), Some(Month::April));
+            assert_eq!(Month::from_index(5), Some(Month::May));
+            assert_eq!(Month::from_index(6), Some(Month::June));
+            assert_eq!(Month::from_index(7), Some(Month::July));
+            assert_eq!(Month::from_index(8), Some(Month::August));
+            assert_eq!(Month::from_index(9), Some(Month::September));
+            assert_eq!(Month::from_index(10), Some(Month::October));
+            assert_eq!(Month::from_index(11), Some(Month::November));
+            assert_eq!(Month::from_index(12), Some(Month::December));
+        }
+
+        #[test]
+        fn test_from_index_invalid_values() {
+            assert_eq!(Month::from_index(0), None);
+            assert_eq!(Month::from_index(13), None);
+            assert_eq!(Month::from_index(100), None);
+        }
     }
 
 }
