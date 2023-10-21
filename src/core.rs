@@ -318,7 +318,74 @@ pub mod calendar {
                 days_calendar: filtered_days_calendar,
             }
         }
+        
+        /// Generates a `DaysCalendar` type with `Zero` values of `BiDay`
+        pub fn zeros(self) -> DaysCalendar<BiDay> {
+            let pattern: [BiDay; 1] = [BiDay::Zero];
+            replicate::<BiDay>(&pattern, self)
+        }
 
+        /// Generates a `DaysCalendar` type with `Ones` values of `BiDay`
+        pub fn ones(self) -> DaysCalendar<BiDay> {
+            let pattern: [BiDay; 1] = [BiDay::One];
+            replicate::<BiDay>(&pattern, self)
+        }
+
+        /// Generates a DaysCalendar type with values of a BiDay ascending step.
+        pub fn upward_step(self) -> DaysCalendar<BiDay> {
+            let pattern: [BiDay; 2] = [BiDay::Zero, BiDay::One];
+            replicate::<BiDay>(&pattern, self)
+        }
+
+        /// Generates a DaysCalendar type with values of a descending BiDay step.
+        pub fn downward_step(self) -> DaysCalendar<BiDay> {
+            let pattern: [BiDay; 2] = [BiDay::One, BiDay::Zero];
+            replicate::<BiDay>(&pattern, self)
+        }
+
+        /// Inverts the BiDay values of a DaysCalendar type
+        pub fn invert_biday(&self) -> DaysCalendar<BiDay> {
+            let mut inverted_calendar = Vec::new();
+
+            for (year, month, days) in &self.days_calendar {
+                let inverted_days = days
+                    .iter()
+                    .map(|day| match day {
+                        BiDay::Zero => BiDay::One,
+                        BiDay::One => BiDay::Zero,
+                    })
+                    .collect::<Vec<BiDay>>();
+                inverted_calendar.push((*year, *month, inverted_days));
+            }
+
+            DaysCalendar {
+                days_calendar: inverted_calendar,
+            }
+        }
+
+        /// Takes n BiDay values from a given DaysCalendar
+        pub fn take_n_biday(&self, n: usize) -> DaysCalendar<BiDay> {
+            let mut result = DaysCalendar {
+                days_calendar: Vec::new(),
+            };
+
+            let mut remaining = n;
+            let days_iter = self.days_calendar.iter();
+
+            for (year, month, days) in days_iter {
+                if remaining == 0 {
+                    break;
+                }
+
+                let to_take = remaining.min(days.len());
+                let new_days = days.iter().take(to_take).cloned().collect();
+                result.days_calendar.push((*year, *month, new_days));
+
+                remaining -= to_take;
+            }
+
+            result
+        }
 
     }
 
@@ -342,76 +409,6 @@ pub mod calendar {
 
         DaysCalendar {
             days_calendar: new_calendar,
-        }
-    }
-
-    impl DaysCalendar<BiDay> {
-        /// Generates a `DaysCalendar` type with `Zero` values of `BiDay`
-        pub fn zeros(self) -> DaysCalendar<BiDay> {
-            let pattern: [BiDay; 1] = [BiDay::Zero];
-            replicate::<BiDay>(&pattern, self)
-        }
-        
-        /// Generates a `DaysCalendar` type with `Ones` values of `BiDay`
-        pub fn ones(self) -> DaysCalendar<BiDay> {
-            let pattern: [BiDay; 1] = [BiDay::One];
-            replicate::<BiDay>(&pattern, self)
-        }
-
-        /// Generates a DaysCalendar type with values of a BiDay ascending step.
-        pub fn upward_step(self) -> DaysCalendar<BiDay> {
-            let pattern: [BiDay; 2] = [BiDay::Zero, BiDay::One];
-            replicate::<BiDay>(&pattern, self)
-        }
-
-        /// Generates a DaysCalendar type with values of a descending BiDay step.
-        pub fn downward_step(self) -> DaysCalendar<BiDay> {
-            let pattern: [BiDay; 2] = [BiDay::One, BiDay::Zero];
-            replicate::<BiDay>(&pattern, self)
-        }
-
-        /// Inverts the BiDay values of a DaysCalendar type
-        pub fn invert_biday(&self) -> DaysCalendar<BiDay> {
-            let mut inverted_calendar = Vec::new();
-    
-            for (year, month, days) in &self.days_calendar {
-                let inverted_days = days
-                    .iter()
-                    .map(|day| match day {
-                        BiDay::Zero => BiDay::One,
-                        BiDay::One => BiDay::Zero,
-                    })
-                    .collect::<Vec<BiDay>>();
-                inverted_calendar.push((*year, *month, inverted_days));
-            }
-    
-            DaysCalendar {
-                days_calendar: inverted_calendar,
-            }
-        }
-
-        /// Takes n BiDay values from a given DaysCalendar
-        pub fn take_n_biday(&self, n: usize) -> DaysCalendar<BiDay> {
-            let mut result = DaysCalendar {
-                days_calendar: Vec::new(),
-            };
-    
-            let mut remaining = n;
-            let days_iter = self.days_calendar.iter();
-    
-            for (year, month, days) in days_iter {
-                if remaining == 0 {
-                    break;
-                }
-    
-                let to_take = remaining.min(days.len());
-                let new_days = days.iter().take(to_take).cloned().collect();
-                result.days_calendar.push((*year, *month, new_days));
-    
-                remaining -= to_take;
-            }
-    
-            result
         }
     }
 
