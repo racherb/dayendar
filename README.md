@@ -146,4 +146,4 @@ If you want to be part of Dayendar's team of maintainers then generate a PR in t
 
 ## License
 
-Apache-2
+This project is licensed under the **Apache 2.0 License**. It is a permissive license that is widely used in open-source software projects. It allows users to use, modify, and distribute the software in any way they wish, as long as they comply with the conditions set by the license. For more information, please refer to the official page of the Apache 2.0 License.
