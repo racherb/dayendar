@@ -29,7 +29,7 @@ There are three reasons:
 
 ## Instalation
 
-With Rust Cargo:
+**With Rust Cargo**:
 
 ```bash
 cargo add dayendar
@@ -41,6 +41,16 @@ Or add the following line to your `Cargo.toml` file:
 [dependencies]
 dayendar = "0.1.2"
 ```
+
+**From GitHub**:
+
+```bash
+git clone https://github.com/racherb/dayendar.git
+cd dayendar
+cargo build
+cargo test
+```
+
 
 ## Usage
 

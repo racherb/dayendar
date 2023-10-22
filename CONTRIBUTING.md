@@ -27,6 +27,16 @@ If, for any reason, you need to deviate from the style guide, you must clearly d
 
 ```
 
+## Code quality
+
+To ensure the quality of our code, we use the warnings provided by the `rustc` compiler and the `Clippy` linting tool. Before submitting any changes, please make sure that your code does not produce warnings and that it has been reviewed with Clippy.
+
+`cargo clippy`
+
+## Warnings Policy
+
+This project follows a strict policy regarding warnings and bugs in the code. We use tools such as `rustc` and `Clippy` with strict settings to ensure code quality. All contributors are expected to resolve warnings before submitting changes to the repository.
+
 ## Developer Certificate of Origin (DCO)
 
 In order to contribute, you must certify that you have the right to submit your contribution to this project and agree to the Developer Certificate of Origin (DCO) terms. This is certified by adding a "Signed-off-by" statement to your commits. The DCO is available as DCO.txt in this repository.
@@ -44,6 +54,12 @@ All commits contributed to this project must be signed-off. By signing off with 
 - You agree to the Developer Certificate of Origin terms.
 
  Note that the "Signed-off-by" line is important, and Git has a '-s' command line option to add it automatically.
+
+## Test execution
+
+To ensure the quality of the code, we use automated tests. To run the tests, simply use the command:
+
+`cargo test`
 
 ## Testing Policy for New Functionality
 
