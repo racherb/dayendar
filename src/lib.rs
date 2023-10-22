@@ -1,5 +1,9 @@
+
+// LCOV_EXCL_LINE
 mod generic;
+// LCOV_EXCL_LINE
 mod operations;
+// LCOV_EXCL_LINE
 mod core;
 
 pub use crate::generic::*;
