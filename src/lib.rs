@@ -1,15 +1,13 @@
 
-// LCOV_EXCL_LINE
-mod generic;
-// LCOV_EXCL_LINE
-mod operations;
-// LCOV_EXCL_LINE
-mod core;
 
+mod generic; //grcov-excl-line
 pub use crate::generic::*;
-pub use crate::operations::*;
-pub use crate::core::*;
 
+mod operations; //grcov-excl-line
+pub use crate::operations::*;
+
+mod core; //grcov-excl-line
+pub use crate::core::*;
 
 #[cfg(test)]
 mod test {
