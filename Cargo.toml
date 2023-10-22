@@ -37,6 +37,9 @@ path = "examples/basic_usage.rs"
 name = "jhon_schedule"
 path = "examples/jhon_schedule.rs"
 
+[profile.dev]
+debug = true
+
 [features]
 testing = []
 
