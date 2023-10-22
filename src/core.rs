@@ -659,7 +659,7 @@ pub mod calendar {
         for date in dates {
             let entry = year_month_map
                 .entry((date.year().try_into().unwrap(), date.month().into()))
-                .or_insert_with(Vec::new);
+                .or_default(); //.or_insert_with(Vec::new);
             let day = date.day() as Day;
             if !entry.contains(&day) {
                 entry.push(day);
