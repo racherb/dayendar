@@ -1,13 +1,14 @@
 
-
-mod generic; //grcov-excl-line
+// GRCOV_EXCL_START
+mod generic;
 pub use crate::generic::*;
 
-mod operations; //grcov-excl-line
+mod operations;
 pub use crate::operations::*;
 
-mod core; //grcov-excl-line
+mod core;
 pub use crate::core::*;
+// GRCOV_EXCL_STOP
 
 #[cfg(test)]
 mod test {
