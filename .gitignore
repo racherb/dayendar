@@ -3,3 +3,4 @@
 *.profraw
 codecov.yml
 coveralls.json
+codecov
