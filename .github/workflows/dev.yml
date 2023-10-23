@@ -1,4 +1,4 @@
-name: Dev
+name: Dev_Sanity_Check
 
 on:
   push:
@@ -22,3 +22,6 @@ jobs:
     
     - name: Run Clippy
       run: cargo clippy
+
+    - name: Audit
+      run: cargo audit
