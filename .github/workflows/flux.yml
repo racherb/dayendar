@@ -1,4 +1,4 @@
-name: flux
+name: Flux
 
 on:
   push:
@@ -15,6 +15,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
+    - name: Preinstalls
+    - run: |
+      apt install git
+      
     - name: Building Z3 using vcpkg
     - run: |
       git clone https://github.com/microsoft/vcpkg.git
