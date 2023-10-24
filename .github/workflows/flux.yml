@@ -1,0 +1,36 @@
+name: Refinement_Type_Checker
+
+on:
+  push:
+    branches: [ "dev" ]
+  pull_request:
+    branches: [ "dev" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Building Z3 using vcpkg
+    - run: |
+      git clone https://github.com/microsoft/vcpkg.git
+      ./bootstrap-vcpkg.sh
+      ./vcpkg install z3
+    
+    - name: Installing Liquid-Fixpoint
+    - run: |
+      git clone https://github.com/ucsd-progsys/liquid-fixpoint.git
+      cd liquid-fixpoint && stack install
+
+    - name: Installing Flux
+      run: | 
+        git clone https://github.com/flux-rs/flux
+        cd flux && cargo xtask install
+
+    
