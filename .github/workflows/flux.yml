@@ -38,6 +38,7 @@ jobs:
 
     - name: Flux Refinement Check
       run: |
+        cargo-flux check
         rustc-flux --crate-type=lib src/generic.rs
         rustc-flux --crate-type=lib src/operations.rs
         rustc-flux --crate-type=lib src/core.rs
