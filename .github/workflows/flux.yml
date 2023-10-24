@@ -17,18 +17,18 @@ jobs:
     
     - name: Preinstalls
     - run: |
-      apt install git
-      
+        apt install git
+
     - name: Building Z3 using vcpkg
     - run: |
-      git clone https://github.com/microsoft/vcpkg.git
-      ./bootstrap-vcpkg.sh
-      ./vcpkg install z3
+        git clone https://github.com/microsoft/vcpkg.git
+        ./bootstrap-vcpkg.sh
+        ./vcpkg install z3
     
     - name: Installing Liquid-Fixpoint
     - run: |
-      git clone https://github.com/ucsd-progsys/liquid-fixpoint.git
-      cd liquid-fixpoint && stack install
+        git clone https://github.com/ucsd-progsys/liquid-fixpoint.git
+        cd liquid-fixpoint && stack install
 
     - name: Installing Flux
       run: | 
