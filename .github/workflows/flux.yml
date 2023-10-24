@@ -1,9 +1,7 @@
-name: Refinement_Type_Checker
+name: flux
 
 on:
   push:
-    branches: [ "dev" ]
-  pull_request:
     branches: [ "dev" ]
 
 env:
