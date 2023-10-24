@@ -36,4 +36,11 @@ jobs:
           git clone https://github.com/flux-rs/flux
           cd flux && cargo xtask install
 
+    - name: Flux Refinement Check
+      run: |
+        rustc-flux --crate-type=lib src/generic.rs
+        rustc-flux --crate-type=lib src/operations.rs
+        rustc-flux --crate-type=lib src/core.rs
+        rustc-flux --crate-type=lib src/lib.rs
+
     
