@@ -8,6 +8,7 @@ pub mod types {
     pub use time::macros::date;
     use core::ops::RangeInclusive;
     use std::collections::HashSet;
+    use std::str::FromStr;
 
     /// Represents the year
     pub type Year = u16;
@@ -65,6 +66,11 @@ pub mod types {
             TimeMonth::try_from(self.to_index()).expect("Invalid month index")
         }
 
+    }
+
+    impl FromStr for Month {
+        type Err = ();
+
         /// Converts a string representation of a month into a `Month`.
         /// 
         /// # Arguments
@@ -74,24 +80,23 @@ pub mod types {
         /// # Returns
         /// 
         /// * `Option<Month>` - Returns `Some(Month)` if the string is a valid representation, otherwise returns `None`.
-        pub fn from_str(s: &str) -> Option<Self> {
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
             match s.to_lowercase().as_str() {
-                "jan" | "january" | "1" | "01" => Some(Month::January),
-                "feb" | "february" | "2" | "02" => Some(Month::February),
-                "mar" | "march" | "3" | "03" => Some(Month::March),
-                "apr" | "april" | "4" | "04" => Some(Month::April),
-                "may" | "5" | "05" => Some(Month::May),
-                "jun" | "june" | "6" | "06" => Some(Month::June),
-                "jul" | "july" | "7" | "07" => Some(Month::July),
-                "aug" | "august" | "8" | "08" => Some(Month::August),
-                "sep" | "september" | "9" | "09" => Some(Month::September),
-                "oct" | "october" | "10" => Some(Month::October),
-                "nov" | "november" | "11" => Some(Month::November),
-                "dec" | "december" | "12" => Some(Month::December),
-                _ => None,
+                "jan" | "january" | "1" | "01" => Ok(Month::January),
+                "feb" | "february" | "2" | "02" => Ok(Month::February),
+                "mar" | "march" | "3" | "03" => Ok(Month::March),
+                "apr" | "april" | "4" | "04" => Ok(Month::April),
+                "may" | "5" | "05" => Ok(Month::May),
+                "jun" | "june" | "6" | "06" => Ok(Month::June),
+                "jul" | "july" | "7" | "07" => Ok(Month::July),
+                "aug" | "august" | "8" | "08" => Ok(Month::August),
+                "sep" | "september" | "9" | "09" => Ok(Month::September),
+                "oct" | "october" | "10" => Ok(Month::October),
+                "nov" | "november" | "11" => Ok(Month::November),
+                "dec" | "december" | "12" => Ok(Month::December),
+                _ => Err(()),
             }
         }
-
     }
 
     /// Enumerator representing the binary value of the day
@@ -128,6 +133,7 @@ pub mod types {
     }
 
     impl YearMonth {
+        #[allow(dead_code)]
         pub fn new(year: Year, month: Month) -> Result<Self, String> {
             if month as u8 >= 1 && month as u8 <= 12 {
                 Ok(YearMonth { year, month })
@@ -138,18 +144,18 @@ pub mod types {
 
         /// Creates a `YearMonth` from a given `Date`
         pub fn from_date(date: Date) -> Self {
-            let year = date.year() as Year;
-            let month = Month::from_index(date.month() as u8).expect("Invalid month index from date");
+            let year: u16 = date.year() as Year;
+            let month: Month = Month::from_index(date.month() as u8).expect("Invalid month index from date");
             YearMonth { year, month }
         }
 
         pub fn next_month(&self) -> Option<Self> {
-            let next_month_index = self.month.to_index() + 1;
-            let next_year = self.year + 1;
+            let next_month_index: u8 = self.month.to_index() + 1;
+            let next_year: u16 = self.year + 1;
             
             match Month::from_index(next_month_index) {
                 Some(next_month) => Some(YearMonth { year: self.year, month: next_month }),
-                None if next_month_index == 13 => Month::from_index(1).map(|january| YearMonth { year: next_year, month: january }),
+                None if next_month_index == 13 => Month::from_index(1).map(|january: Month| YearMonth { year: next_year, month: january }),
                 _ => None,
             }
         }
@@ -159,7 +165,7 @@ pub mod types {
             
             match Month::from_index(prev_month_index) {
                 Some(prev_month) => Some(YearMonth { year: self.year, month: prev_month }),
-                None if prev_month_index == 0 => Month::from_index(12).map(|december| YearMonth { year: self.year - 1, month: december }),
+                None if prev_month_index == 0 => Month::from_index(12).map(|december: Month| YearMonth { year: self.year - 1, month: december }),
                 _ => None,
             }
         }
@@ -174,33 +180,31 @@ pub mod types {
         Invalid,
     }
 
-    impl SpecType {
-        /// Determines the type of specification from the given string.
-        /// 
-        /// # Arguments
-        /// 
-        /// * `input` - A string slice that might represent a specification.
-        pub fn from_str(input: &str) -> SpecType {
+    impl FromStr for SpecType {
+        type Err = ();
+    
+        fn from_str(input: &str) -> Result<Self, Self::Err> {
+            // Single month
+            if Month::from_str(input).is_ok() {
+                return Ok(SpecType::Single);
+            }
             // Single year
             if input.parse::<Year>().is_ok() {
-                return SpecType::Single;
+                return Ok(SpecType::Single);
             }
-
             // Year range
             if input.contains('-') {
-                return SpecType::Range;
+                return Ok(SpecType::Range);
             }
-
             // Year list
             if input.contains(',') {
-                return SpecType::List;
+                return Ok(SpecType::List);
             }
-
-            SpecType::Invalid
+            Ok(SpecType::Invalid)
         }
     }
 
-    #[derive(PartialEq, Eq)]
+    #[derive(PartialEq, Eq, Debug)]
     pub enum YearSpec {
         Single(Year),
         Range(RangeInclusive<Year>),
@@ -216,7 +220,10 @@ pub mod types {
         /// 
         /// # Examples
         /// 
-        /// ```
+        /// ```rust
+        /// use dayendar::types::YearSpec;
+        /// use std::collections::HashSet;
+        /// 
         /// let y = YearSpec::parse("2023").unwrap();
         /// assert_eq!(y, YearSpec::Single(2023));
         /// 
@@ -238,8 +245,8 @@ pub mod types {
     
             // Year range
             if let Some(idx) = input.find('-') {
-                let start = input[..idx].trim().parse::<Year>().ok()?;
-                let end = input[idx+1..].trim().parse::<Year>().ok()?;
+                let start: u16 = input[..idx].trim().parse::<Year>().ok()?;
+                let end: u16 = input[idx+1..].trim().parse::<Year>().ok()?;
                 return Some(YearSpec::Range(start..=end));
             }
     
@@ -257,27 +264,27 @@ pub mod types {
             Self::parse(input).is_some()
         }
 
-        fn to_year_month(&self) -> HashSet<(Year, Month)> {
+        pub fn to_year_month(&self) -> HashSet<(Year, Month)> {
             match self {
-                YearSpec::Single(year) => (1..=12).map(|month_num| {
-                    let month = Month::from_index(month_num).unwrap();
+                YearSpec::Single(year) => (1..=12).map(|month_num: u8| {
+                    let month: Month = Month::from_index(month_num).unwrap();
                     (*year, month)
                 }).collect(),
                 YearSpec::Range(range) => {
-                    let mut result = HashSet::new();
+                    let mut result: HashSet<(u16, Month)> = HashSet::new();
                     for year in range.clone() {
                         for month_num in 1..=12 {
-                            let month = Month::from_index(month_num).unwrap();
+                            let month: Month = Month::from_index(month_num).unwrap();
                             result.insert((year, month));
                         }
                     }
                     result
                 },
                 YearSpec::List(years) => {
-                    let mut result = HashSet::new();
+                    let mut result: HashSet<(u16, Month)> = HashSet::new();
                     for year in years {
                         for month_num in 1..=12 {
-                            let month = Month::from_index(month_num).unwrap();
+                            let month: Month = Month::from_index(month_num).unwrap();
                             result.insert((*year, month));
                         }
                     }
@@ -296,8 +303,8 @@ pub mod types {
                     year.hash(state);
                 },
                 YearSpec::Range(range) => {
-                    let start = range.start();
-                    let end = range.end();
+                    let start: &u16 = range.start();
+                    let end: &u16 = range.end();
                     "Range".hash(state);
                     start.hash(state);
                     end.hash(state);
@@ -314,7 +321,7 @@ pub mod types {
     }
     
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub(crate) enum MonthSpec {
+    pub enum MonthSpec {
         Single(Month),
         Range(RangeInclusive<Month>),
         List(HashSet<Month>),
@@ -350,7 +357,8 @@ pub mod types {
     }
 
 
-    pub struct YearMonthSpec(HashSet<(YearSpec, MonthSpec)>);
+    #[derive(PartialEq, Eq, Debug)]
+    pub struct YearMonthSpec(pub HashSet<(YearSpec, MonthSpec)>);
 
     pub enum DateSpec {
         Single(Date),
@@ -373,10 +381,7 @@ pub mod types {
         /// 
         /// * `input` - A string slice that might represent a `MonthSpec`.
         pub fn is_valid(input: &str) -> bool {
-            match SpecType::from_str(input) {
-                SpecType::Invalid => false,
-                _ => true,
-            }
+            !matches!(SpecType::from_str(input), Ok(SpecType::Invalid))
         }
 
         /// Parses a string to create a MonthSpec.
@@ -386,35 +391,36 @@ pub mod types {
         /// * `input` - A string slice that should represent a `MonthSpec`.
         pub fn parse(input: &str) -> Result<MonthSpec, &'static str> {
             match SpecType::from_str(input) {
-                SpecType::Single => {
-                    let month = Month::from_str(input).ok_or("Invalid month format")?;
+                Ok(SpecType::Single) => {
+                    let month: Month = Month::from_str(input).map_err(|_| "Invalid month format")?;
                     Ok(MonthSpec::Single(month))
                 },
-                SpecType::Range => {
+                Ok(SpecType::Range) => {
                     let parts: Vec<&str> = input.split('-').collect();
                     if parts.len() != 2 {
                         return Err("Invalid range format");
                     }
-                    let start = Month::from_str(parts[0]).ok_or("Invalid start month format")?;
-                    let end = Month::from_str(parts[1]).ok_or("Invalid end month format")?;
+                    let start: Month = Month::from_str(parts[0]).map_err(|_| "Invalid month format")?;
+                    let end = Month::from_str(parts[1]).map_err(|_| "Invalid end month format")?;
                     Ok(MonthSpec::Range(start..=end))
                 },
-                SpecType::List => {
-                    let months = input.split(',')
-                        .map(|s| s.trim())
-                        .filter_map(Month::from_str)
+                Ok(SpecType::List) => {
+                    let months: HashSet<Month> = input.split(',')
+                        .map(|s: &str| s.trim())
+                        .filter_map(|input| Month::from_str(input).ok())
                         .collect::<HashSet<Month>>();
                     if months.is_empty() {
                         return Err("Invalid list format");
                     }
                     Ok(MonthSpec::List(months))
                 },
-                SpecType::Invalid => Err("Invalid MonthSpec format"),
+                Ok(SpecType::Invalid) => Err("Invalid MonthSpec format"),
+                _ => Err("Invalid MonthSpec format"),
             }
         }
 
         
-        fn to_year_month(&self, year: Year) -> HashSet<(Year, Month)> {
+        pub fn to_year_month(&self, year: Year) -> HashSet<(Year, Month)> {
             match self {
                 MonthSpec::Single(month) => vec![(year, *month)].into_iter().collect(),
                 MonthSpec::Range(range) => {
@@ -450,7 +456,7 @@ pub mod types {
             let year = parts[0].parse::<Year>();
             let month = Month::from_str(parts[1]);
 
-            year.is_ok() && month.is_some()
+            year.is_ok() && month.is_ok()
         }
 
         /// Tries to parse the given string into a `YearMonthSpec`.
@@ -478,7 +484,7 @@ pub mod types {
             Ok(YearMonthSpec(set))
         }
 
-        fn to_year_month(&self) -> HashSet<(Year, Month)> {
+        pub fn to_year_month(&self) -> HashSet<(Year, Month)> {
             let mut result = HashSet::new();
             for (year_spec, month_spec) in &self.0 {
                 let years = year_spec.to_year_month().into_iter().map(|(year, _)| year).collect::<HashSet<_>>();
@@ -492,7 +498,7 @@ pub mod types {
 
     impl DateSpec {
         
-        fn to_year_month(&self) -> HashSet<(Year, Month)> {
+        pub fn to_year_month(&self) -> HashSet<(Year, Month)> {
             match self {
                 DateSpec::Single(date) => {
                     let month = Month::from_index(date.month() as u8).unwrap();
@@ -529,7 +535,7 @@ pub mod types {
     }
 
     impl DateSpan {
-        fn to_year_month(&self) -> HashSet<(Year, Month)> {
+        pub fn to_year_month(&self) -> HashSet<(Year, Month)> {
             match self {
                 DateSpan::Year(year_spec) => year_spec.to_year_month(),
                 DateSpan::YearMonth(year_month_spec) => year_month_spec.to_year_month(),
@@ -542,6 +548,8 @@ pub mod types {
     #[cfg(test)]
     mod tests_types {
         use super::*;
+        use std::collections::HashSet;
+
 
         #[test]
         fn month_to_index_test() {
@@ -802,18 +810,18 @@ pub mod types {
         #[test]
         fn test_datespan_date_to_year_month() {
             // Test Single variant of DateSpec
-            let single_date = date!(2023 - 01 - 15); // Asumiendo que tienes disponible el macro date!
-            let single = DateSpec::Single(single_date);
-            let date_span = DateSpan::Date(single);
-            let expected = vec![(2023, Month::January)].into_iter().collect();
+            let single_date: Date = date!(2023 - 01 - 15);
+            let single: DateSpec = DateSpec::Single(single_date);
+            let date_span: DateSpan = DateSpan::Date(single);
+            let expected: HashSet<(u16, Month)> = vec![(2023, Month::January)].into_iter().collect();
             assert_eq!(date_span.to_year_month(), expected);
 
             // Test Range variant of DateSpec
-            let start_date = date!(2023 - 01 - 15);
-            let end_date = date!(2023 - 03 - 15);
-            let range = DateSpec::Range(start_date, end_date);
-            let date_span = DateSpan::Date(range);
-            let expected = vec![
+            let start_date: Date = date!(2023 - 01 - 15);
+            let end_date: Date = date!(2023 - 03 - 15);
+            let range: DateSpec = DateSpec::Range(start_date, end_date);
+            let date_span: DateSpan = DateSpan::Date(range);
+            let expected: HashSet<(u16, Month)> = vec![
                 (2023, Month::January),
                 (2023, Month::February),
                 (2023, Month::March)
@@ -821,15 +829,273 @@ pub mod types {
             assert_eq!(date_span.to_year_month(), expected);
 
             // Test List variant of DateSpec
-            let list_dates = vec![date!(2023 - 01 - 15), date!(2023 - 03 - 15)];
-            let list = DateSpec::List(list_dates.into_iter().collect());
-            let date_span = DateSpan::Date(list);
-            let expected = vec![
+            let list_dates: Vec<Date> = vec![date!(2023 - 01 - 15), date!(2023 - 03 - 15)];
+            let list: DateSpec = DateSpec::List(list_dates.into_iter().collect());
+            let date_span: DateSpan = DateSpan::Date(list);
+            let expected: HashSet<(u16, Month)> = vec![
                 (2023, Month::January),
                 (2023, Month::March)
             ].into_iter().collect();
             assert_eq!(date_span.to_year_month(), expected);
         }
+
+        #[test]
+        fn test_month_to_time_month_2() {
+            assert_eq!(Month::January.to_time_month(), TimeMonth::January);
+            assert_eq!(Month::December.to_time_month(), TimeMonth::December);
+        }
+
+        #[test]
+        fn test_month_from_str() {
+            assert_eq!(Month::from_str("jan"), Ok(Month::January));
+            assert_eq!(Month::from_str("december"), Ok(Month::December));
+            assert_eq!(Month::from_str("13"), Err(()));
+            assert_eq!(Month::from_str("invalid"), Err(()));
+        }
+
+        #[test]
+        fn test_yearmonth_new() {
+            assert_eq!(YearMonth::new(2023, Month::January), Ok(YearMonth { year: 2023, month: Month::January }));
+            assert_eq!(YearMonth::new(2023, Month::from_index(1).unwrap()), Ok(YearMonth { year: 2023, month: Month::January }));
+        }
+
+        #[test]
+        fn test_yearmonth_from_date() {
+            let date = date!(2023 - 01 - 15);
+            assert_eq!(YearMonth::from_date(date), YearMonth { year: 2023, month: Month::January });
+        }
+
+        #[test]
+        fn test_yearmonth_next_month() {
+            let january = YearMonth { year: 2023, month: Month::January };
+            let february = YearMonth { year: 2023, month: Month::February };
+            let december = YearMonth { year: 2023, month: Month::December };
+            let next_january = YearMonth { year: 2024, month: Month::January };
+
+            assert_eq!(january.next_month(), Some(february));
+            assert_eq!(december.next_month(), Some(next_january));
+        }
+
+        #[test]
+        fn test_yearmonth_previous_month() {
+            let january = YearMonth { year: 2023, month: Month::January };
+            let previous_december = YearMonth { year: 2022, month: Month::December };
+            let february = YearMonth { year: 2023, month: Month::February };
+            let january_again = YearMonth { year: 2023, month: Month::January };
+
+            assert_eq!(january.previous_month(), Some(previous_december));
+            assert_eq!(february.previous_month(), Some(january_again));
+        }
+
+        #[test]
+        fn test_yearspec_parse() {
+            assert_eq!(YearSpec::parse("2023"), Some(YearSpec::Single(2023)));
+            
+            assert_eq!(YearSpec::parse("2023-2025"), Some(YearSpec::Range(2023..=2025)));
+
+            let mut set = HashSet::new();
+            set.insert(2023);
+            set.insert(2025);
+            set.insert(2027);
+            assert_eq!(YearSpec::parse("2023,2025,2027"), Some(YearSpec::List(set)));
+        }
+
+        #[test]
+        fn test_yearspec_is_valid() {
+            assert!(YearSpec::is_valid("2023"));
+            assert!(YearSpec::is_valid("2023-2025"));
+            assert!(YearSpec::is_valid("2023,2025,2027"));
+            assert!(!YearSpec::is_valid("invalid_input"));
+        }
+
+        #[test]
+        fn test_yearspec_to_year_month() {
+            let year_spec_single = YearSpec::Single(2023);
+            let mut expected_single = HashSet::new();
+            for month_num in 1..=12 {
+                let month = Month::from_index(month_num).unwrap();
+                expected_single.insert((2023, month));
+            }
+            assert_eq!(year_spec_single.to_year_month(), expected_single);
+
+            let year_spec_range = YearSpec::Range(2023..=2024);
+            let mut expected_range = HashSet::new();
+            for year in 2023..=2024 {
+                for month_num in 1..=12 {
+                    let month = Month::from_index(month_num).unwrap();
+                    expected_range.insert((year, month));
+                }
+            }
+            assert_eq!(year_spec_range.to_year_month(), expected_range);
+
+            let mut set = HashSet::new();
+            set.insert(2023);
+            set.insert(2025);
+            let year_spec_list = YearSpec::List(set);
+            let mut expected_list = HashSet::new();
+            for &year in &[2023, 2025] {
+                for month_num in 1..=12 {
+                    let month = Month::from_index(month_num).unwrap();
+                    expected_list.insert((year, month));
+                }
+            }
+            assert_eq!(year_spec_list.to_year_month(), expected_list);
+        }
+
+        #[test]
+        fn test_monthspec_is_valid() {
+            assert!(MonthSpec::is_valid("January"));
+            assert!(MonthSpec::is_valid("Jan-Feb"));
+            assert!(MonthSpec::is_valid("Jan,Feb,Mar"));
+            assert!(!MonthSpec::is_valid("invalid_input"));
+        }
+
+        #[test]
+        fn test_monthspec_parse() {
+            assert_eq!(MonthSpec::parse("January"), Ok(MonthSpec::Single(Month::January)));
+            
+            assert_eq!(MonthSpec::parse("Jan-Feb"), Ok(MonthSpec::Range(Month::January..=Month::February)));
+
+            let mut set = HashSet::new();
+            set.insert(Month::January);
+            set.insert(Month::February);
+            set.insert(Month::March);
+            assert_eq!(MonthSpec::parse("Jan,Feb,Mar"), Ok(MonthSpec::List(set)));
+        }
+
+        #[test]
+        fn test_monthspec_to_year_month() {
+            let year = 2023;
+            let month_spec_single = MonthSpec::Single(Month::January);
+            assert_eq!(month_spec_single.to_year_month(year), vec![(year, Month::January)].into_iter().collect());
+
+            let month_spec_range = MonthSpec::Range(Month::January..=Month::March);
+            let mut expected_range = HashSet::new();
+            for month in &[Month::January, Month::February, Month::March] {
+                expected_range.insert((year, *month));
+            }
+            assert_eq!(month_spec_range.to_year_month(year), expected_range);
+
+            let mut set = HashSet::new();
+            set.insert(Month::January);
+            set.insert(Month::March);
+            let month_spec_list = MonthSpec::List(set);
+            let mut expected_list = HashSet::new();
+            for &month in &[Month::January, Month::March] {
+                expected_list.insert((year, month));
+            }
+            assert_eq!(month_spec_list.to_year_month(year), expected_list);
+        }
+
+        #[test]
+        fn test_yearmonthspec_is_valid() {
+            assert!(YearMonthSpec::is_valid("2023-January"));
+            assert!(!YearMonthSpec::is_valid("invalid_input"));
+            assert!(!YearMonthSpec::is_valid("Jan-2023"));
+        }
+
+        #[test]
+        fn test_yearmonthspec_parse() {
+            let year = 2023;
+            let month = Month::January;
+            let mut set = HashSet::new();
+            set.insert((YearSpec::Single(year), MonthSpec::Single(month)));
+            assert_eq!(YearMonthSpec::parse("2023-January"), Ok(YearMonthSpec(set)));
+        }
+
+        #[test]
+        fn test_yearmonthspec_to_year_month() {
+            let year = 2023;
+            let month = Month::January;
+            let mut set = HashSet::new();
+            set.insert((YearSpec::Single(year), MonthSpec::Single(month)));
+            let year_month_spec = YearMonthSpec(set);
+            assert_eq!(year_month_spec.to_year_month(), vec![(year, month)].into_iter().collect());
+        }
+
+        #[test]
+        fn test_biday_conversion() {
+            assert_eq!(BiDay::from_u8(0), Some(BiDay::Zero));
+            assert_eq!(BiDay::from_u8(1), Some(BiDay::One));
+            assert_eq!(BiDay::from_u8(2), None); // Invalid value
+            assert_eq!(BiDay::Zero.to_u8(), 0);
+            assert_eq!(BiDay::One.to_u8(), 1);
+        }
+
+        #[test]
+        fn test_datespec_to_year_month() {
+            let single_date = DateSpec::Single(date!(2023 - 05 - 15));
+            let range_date = DateSpec::Range(date!(2022 - 05 - 15), date!(2024 - 07 - 15));
+            let mut dates = HashSet::new();
+            dates.insert(date!(2021 - 01 - 01));
+            dates.insert(date!(2021 - 12 - 31));
+            let list_date = DateSpec::List(dates);
+
+            assert_eq!(single_date.to_year_month(), vec![(2023, Month::May)].into_iter().collect());
+            assert_eq!(list_date.to_year_month(), vec![(2021, Month::January), (2021, Month::December)].into_iter().collect());
+
+            let range_output = range_date.to_year_month();
+            assert!(range_output.contains(&(2022, Month::May)));
+            assert!(range_output.contains(&(2024, Month::July)));
+        }
+
+        #[test]
+        fn test_datespan_to_year_month() {
+            let single_year = DateSpan::Year(YearSpec::Single(2023));
+            let mut year_month_set = HashSet::new();
+            year_month_set.insert((YearSpec::Single(2023), MonthSpec::Single(Month::May)));
+            let year_month = DateSpan::YearMonth(YearMonthSpec(year_month_set));
+            let single_date = DateSpan::Date(DateSpec::Single(date!(2023 - 05 - 15)));
+
+            assert!(single_year.to_year_month().contains(&(2023, Month::May)));
+            assert!(year_month.to_year_month().contains(&(2023, Month::May)));
+            assert!(single_date.to_year_month().contains(&(2023, Month::May)));
+        }
+
+        #[test]
+        fn test_yearspec_is_valid_2() {
+            assert!(YearSpec::is_valid("2023"));
+            assert!(YearSpec::is_valid("2020-2025"));
+            assert!(YearSpec::is_valid("2020,2022,2024"));
+
+            // Casos no válidos
+            assert!(!YearSpec::is_valid("20a3"));
+            assert!(!YearSpec::is_valid("2020-20a5"));
+            assert!(!YearSpec::is_valid("2020,20a2,2024"));
+        }
+
+        #[test]
+        fn test_yearspec_parse_2() {
+            assert_eq!(YearSpec::parse("2023").unwrap(), YearSpec::Single(2023));
+
+            let range = 2020..=2025;
+            assert_eq!(YearSpec::parse("2020-2025").unwrap(), YearSpec::Range(range));
+
+            let mut set = HashSet::new();
+            set.insert(2020);
+            set.insert(2022);
+            set.insert(2024);
+            assert_eq!(YearSpec::parse("2020,2022,2024").unwrap(), YearSpec::List(set));
+        }
+
+        #[test]
+        fn test_yearmonth_navigation() {
+            let ym = YearMonth::new(2022, Month::December).unwrap();
+            assert_eq!(ym.next_month().unwrap(), YearMonth::new(2023, Month::January).unwrap());
+
+
+            let ym = YearMonth::new(2023, Month::January).unwrap();
+            assert_eq!(ym.previous_month().unwrap(), YearMonth::new(2022, Month::December).unwrap());
+        }
+
+        #[test]
+        fn test_invalid_month_from_str() {
+            assert!(Month::from_str("Januar").is_err());
+            assert!(Month::from_str("13").is_err());
+            assert!(Month::from_str("0").is_err());
+        }
+
+
 
 
 
