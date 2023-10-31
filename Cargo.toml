@@ -29,6 +29,11 @@ name = "calendar"
 path = "bench/calendar.rs"
 harness = false
 
+[[bench]]
+name = "date_span"
+path = "bench/date_span.rs"
+harness = false
+
 [[example]]
 name = "basic_usage"
 path = "examples/basic_usage.rs"
@@ -37,11 +42,20 @@ path = "examples/basic_usage.rs"
 name = "jhon_schedule"
 path = "examples/jhon_schedule.rs"
 
+[[example]]
+name = "abstract_calendar"
+path = "examples/abstract_calendar.rs"
+
+[[example]]
+name = "date_span"
+path = "examples/date_span.rs"
+
+
 [profile.dev]
 debug = true
 
 [features]
-testing = []
+default = []
 
 [profile.release]
 opt-level = 3
