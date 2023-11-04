@@ -1,11 +1,11 @@
 
+use std::collections::HashSet;
+use std::collections::HashMap;
+use std::collections::BTreeMap;
+
 /// Module for advanced and efficient calendar operations
 pub mod calendar {
 
-    use std::collections::HashSet;
-    use std::collections::HashMap;
-    use std::collections::BTreeMap;
-    use itertools::Itertools;
     
     use crate::utils::{days_in_month, generate_vec_days};
     use crate::binary::{
@@ -18,6 +18,8 @@ pub mod calendar {
         Year, Month, Day, BiDay, Weekday,
         Date, Duration
     };
+
+    use itertools::Itertools;
 
     /// The `DaysCalendar` base type to handle calendar related operations.
     /// provides a set of methods and functions for working
@@ -56,7 +58,7 @@ pub mod calendar {
 
         /// Combines two DaysCalendar types into one by making an extension of the calendars
         pub fn append(&self, other: &Self) -> DaysCalendar<BiDay> {
-            let mut combined_days = Vec::with_capacity(self.days_calendar.len() + other.days_calendar.len());
+            let mut combined_days: Vec<(u16, Month, Vec<BiDay>)> = Vec::with_capacity(self.days_calendar.len() + other.days_calendar.len());
             combined_days.extend(self.days_calendar.iter().cloned());
             combined_days.extend(other.days_calendar.iter().cloned());
             DaysCalendar { days_calendar: combined_days }
@@ -65,32 +67,32 @@ pub mod calendar {
         /// Combines two DaysCalendar types based on the OR operator
         pub fn or(&self, other: &Self) -> DaysCalendar<BiDay> {
 
-            let combined_days = self.append(other);
+            let combined_days: DaysCalendar<BiDay> = self.append(other);
             resume(&combined_days, or_biday_operation) 
         
         }
 
         /// Combines two DaysCalendar types based on the AND operator
         pub fn and(&self, other: &Self) -> DaysCalendar<BiDay> {
-            let combined_days = self.append(other);
+            let combined_days: DaysCalendar<BiDay> = self.append(other);
             resume(&combined_days, and_biday_operation)
         }
 
         /// Combines two DaysCalendar types based on the SUSTRACT operator
         pub fn minus(&self, other: &Self) -> DaysCalendar<BiDay> {
-            let combined_days = self.append(other);
+            let combined_days: DaysCalendar<BiDay> = self.append(other);
             resume(&combined_days, minus_biday_operation)
         }
 
         /// Combines two DaysCalendar types based on calendar matches
         pub fn r#match(&self, other: &Self) -> DaysCalendar<BiDay> {
-            let combined_days = self.append(other);
+            let combined_days: DaysCalendar<BiDay> = self.append(other);
             resume(&combined_days, match_biday_operation)
         }
 
         /// Combines two DaysCalendar types based on calendar mismatches
         pub fn nomatch(&self, other: &Self) -> DaysCalendar<BiDay> {
-            let combined_days = self.append(other);
+            let combined_days: DaysCalendar<BiDay> = self.append(other);
             resume(&combined_days, nomatch_biday_operation)
         }
         
@@ -107,11 +109,11 @@ pub mod calendar {
         
         /// Finds the next day on the calendar after a given date
         pub fn next_day(&self, year: Year, month: Month, day: Day) -> Option<Date> {
-            let reference_date = Date::from_calendar_date(year.into(), month.to_time_month(), day).ok()?;
+            let reference_date: Date = Date::from_calendar_date(year.into(), month.to_time_month(), day).ok()?;
 
-            let dates = to_date(self.clone());
+            let dates: Vec<Date> = to_date(self.clone());
 
-            let mut next_date = None;
+            let mut next_date: Option<Date> = None;
             for date in dates.into_iter() {
                 if date > reference_date {
                     next_date = Some(date);
@@ -124,9 +126,9 @@ pub mod calendar {
 
         /// Finds the previous day in the calendar before a given date 
         pub fn previous_day(&self, year: Year, month: Month, day: Day) -> Option<Date> {
-            let reference_date = Date::from_calendar_date(year.into(), month.to_time_month(), day).ok()?;
+            let reference_date: Date = Date::from_calendar_date(year.into(), month.to_time_month(), day).ok()?;
 
-            let dates = to_date(self.clone());
+            let dates: Vec<Date> = to_date(self.clone());
 
             let mut previous_date = None;
             for date in dates.into_iter().rev() {
@@ -141,11 +143,11 @@ pub mod calendar {
 
         /// Searches for the n-th day after/before a given date
         pub fn seek_nth_day(&self, year: Year, month: Month, day: Day, mut n: isize) -> Option<Date> {
-            let reference_date = Date::from_calendar_date(year.into(), month.to_time_month(), day).ok()?;
+            let reference_date: Date = Date::from_calendar_date(year.into(), month.to_time_month(), day).ok()?;
 
-            let dates = to_date(self.clone());
+            let dates: Vec<Date> = to_date(self.clone());
 
-            let mut target_date = None;
+            let mut target_date: Option<Date> = None;
             match n.cmp(&0) {
                 std::cmp::Ordering::Greater => {
                 for date in dates.into_iter() {
@@ -180,15 +182,15 @@ pub mod calendar {
         }
 
         /// Filter a calendar by keeping only the specified days of the week
-        pub fn and_weekdays(&self, weekdays: HashSet<Weekday>) -> DaysCalendar<BiDay> {
-            let mut filtered_days_calendar = vec![];
+        pub fn and_weekdays(&self, weekdays: super::HashSet<Weekday>) -> DaysCalendar<BiDay> {
+            let mut filtered_days_calendar: Vec<(u16, Month, Vec<BiDay>)> = vec![];
 
             for (year, month, days) in &self.days_calendar {
                 let mut filtered_days = vec![];
                 for (day_index, bit) in days.iter().enumerate() {
                     let day_num = day_index as u8 + 1;
                     let date = Date::from_calendar_date((*year).into(), month.to_time_month(), day_num).unwrap();
-                    let weekday = date.weekday();
+                    let weekday: Weekday = date.weekday();
 
                     if *bit == BiDay::One && weekdays.contains(&weekday) {
                         filtered_days.push(BiDay::One);
@@ -206,15 +208,15 @@ pub mod calendar {
         }
 
         /// Add specified days of the `week` to a `DaysCalendar`
-        pub fn or_weekdays(&self, weekdays: HashSet<Weekday>) -> DaysCalendar<BiDay> {
-            let mut filtered_days_calendar = vec![];
+        pub fn or_weekdays(&self, weekdays: super::HashSet<Weekday>) -> DaysCalendar<BiDay> {
+            let mut filtered_days_calendar: Vec<(u16, Month, Vec<BiDay>)> = vec![];
 
             for (year, month, days) in &self.days_calendar {
                 let mut filtered_days = vec![];
                 for (day_index, bit) in days.iter().enumerate() {
                     let day_num = day_index as u8 + 1;
-                    let date = Date::from_calendar_date((*year).into(), month.to_time_month(), day_num).unwrap();
-                    let weekday = date.weekday();
+                    let date: Date = Date::from_calendar_date((*year).into(), month.to_time_month(), day_num).unwrap();
+                    let weekday: Weekday = date.weekday();
 
                     if *bit == BiDay::One || (*bit == BiDay::Zero && weekdays.contains(&weekday)) {
                         filtered_days.push(BiDay::One);
@@ -233,7 +235,7 @@ pub mod calendar {
 
         /// Filters a calendar by keeping only the specified ISO weeks
         pub fn and_iso_weeks(&self, weeks: Vec<u32>) -> DaysCalendar<BiDay> {
-            let mut new_calendar = self.clone();
+            let mut new_calendar: DaysCalendar<BiDay> = self.clone();
         
             for (year, month, days) in new_calendar.days_calendar.iter_mut() {
                 let first_day_of_month = Date::from_calendar_date(*year as i32, month.to_time_month(), 1).unwrap();
@@ -253,7 +255,7 @@ pub mod calendar {
 
         /// Adds specified ISO `weeks` to a `DaysCalendar` type
         pub fn or_iso_weeks(&self, weeks: Vec<u32>) -> DaysCalendar<BiDay> {
-            let mut new_calendar = self.clone();
+            let mut new_calendar: DaysCalendar<BiDay> = self.clone();
         
             for (year, month, days) in new_calendar.days_calendar.iter_mut() {
                 let first_day_of_month = Date::from_calendar_date(*year as i32, month.to_time_month(), 1).unwrap();
@@ -273,13 +275,13 @@ pub mod calendar {
         
         /// Excludes specific ISO `weeks` of type `DaysCalendar`
         pub fn not_iso_weeks(&self, weeks: Vec<u32>) -> DaysCalendar<BiDay> {
-            let mut new_calendar = self.clone();
+            let mut new_calendar: DaysCalendar<BiDay> = self.clone();
         
             for (year, month, days) in new_calendar.days_calendar.iter_mut() {
                 let first_day_of_month = Date::from_calendar_date(*year as i32, month.to_time_month(), 1).unwrap();
         
                 for (day_index, day) in days.iter_mut().enumerate() {
-                    let date = first_day_of_month + Duration::days(day_index as i64);
+                    let date: Date = first_day_of_month + Duration::days(day_index as i64);
                     let week_number = date.iso_week() as u32;
         
                     if *day == BiDay::One && !weeks.contains(&week_number) {
@@ -294,8 +296,8 @@ pub mod calendar {
         }
         
         /// Excludes specific `weekdays` of type `DaysCalendar`
-        pub fn not_weekdays(&self, weekdays: HashSet<Weekday>) -> DaysCalendar<BiDay> {
-            let mut filtered_days_calendar = vec![];
+        pub fn not_weekdays(&self, weekdays: super::HashSet<Weekday>) -> DaysCalendar<BiDay> {
+            let mut filtered_days_calendar: Vec<(u16, Month, Vec<BiDay>)> = vec![];
         
             for (year, month, days) in &self.days_calendar {
                 let mut filtered_days = vec![];
@@ -345,12 +347,12 @@ pub mod calendar {
 
         /// Inverts the BiDay values of a DaysCalendar type
         pub fn invert_biday(&self) -> DaysCalendar<BiDay> {
-            let mut inverted_calendar = Vec::new();
+            let mut inverted_calendar: Vec<(u16, Month, Vec<BiDay>)> = Vec::new();
 
             for (year, month, days) in &self.days_calendar {
-                let inverted_days = days
+                let inverted_days: Vec<BiDay> = days
                     .iter()
-                    .map(|day| match day {
+                    .map(|day: &BiDay| match day {
                         BiDay::Zero => BiDay::One,
                         BiDay::One => BiDay::Zero,
                     })
@@ -365,12 +367,12 @@ pub mod calendar {
 
         /// Takes n BiDay values from a given DaysCalendar
         pub fn take_n_biday(&self, n: usize) -> DaysCalendar<BiDay> {
-            let mut result = DaysCalendar {
+            let mut result: DaysCalendar<BiDay> = DaysCalendar {
                 days_calendar: Vec::new(),
             };
 
             let mut remaining = n;
-            let days_iter = self.days_calendar.iter();
+            let days_iter: std::slice::Iter<'_, (u16, Month, Vec<BiDay>)> = self.days_calendar.iter();
 
             for (year, month, days) in days_iter {
                 if remaining == 0 {
@@ -378,7 +380,7 @@ pub mod calendar {
                 }
 
                 let to_take = remaining.min(days.len());
-                let new_days = days.iter().take(to_take).cloned().collect();
+                let new_days: Vec<BiDay> = days.iter().take(to_take).cloned().collect();
                 result.days_calendar.push((*year, *month, new_days));
 
                 remaining -= to_take;
@@ -393,7 +395,7 @@ pub mod calendar {
     pub fn replicate<T>(pattern: &[BiDay], calendar: DaysCalendar<BiDay>) -> DaysCalendar<BiDay>
     where T: Clone
     {
-        let new_calendar = calendar.days_calendar
+        let new_calendar: Vec<(u16, Month, Vec<BiDay>)> = calendar.days_calendar
             .iter()
             .map(|(year, month, days)| {
                 let replicated_pattern = replicate_pattern(pattern, days.len());
@@ -421,7 +423,7 @@ pub mod calendar {
 
     /// Consult a calendar and consolidate days by year and month
     #[allow(dead_code)]
-    pub fn query_year_consolidate<T>(y: Year, dc: &DaysCalendar<T>) -> HashMap<(Year, Month), Vec<T>>
+    pub fn query_year_consolidate<T>(y: Year, dc: &DaysCalendar<T>) -> super::HashMap<(Year, Month), Vec<T>>
     where
         T: Copy,
     {
@@ -443,7 +445,7 @@ pub mod calendar {
     where
         T: Clone,
     {
-        let mut years: HashSet<Year> = HashSet::new();
+        let mut years: super::HashSet<Year> = super::HashSet::new();
 
         for (year, _, _) in dc.days_calendar.iter().cloned() {
             years.insert(year);
@@ -460,7 +462,7 @@ pub mod calendar {
     where 
         T: Clone,
     {
-        let mut result = Vec::new();
+        let mut result: Vec<(u16, Month)> = Vec::new();
         for (y, m, _) in &dc.days_calendar {
             result.push((*y as Year, *m as Month));
         }
@@ -477,7 +479,7 @@ pub mod calendar {
         dc: &DaysCalendar<T>,
     ) -> Option<Vec<T>> {
         // Finds the index of the element matching the given year and month
-        let index = dc.days_calendar.binary_search_by_key(&(year, month), |(y, m, _)| (*y, *m));
+        let index: Result<usize, usize> = dc.days_calendar.binary_search_by_key(&(year, month), |(y, m, _)| (*y, *m));
         // If the element is found, the corresponding vector of days is returned.
         if let Ok(index) = index {
             Some(dc.days_calendar[index].2.clone())
@@ -491,14 +493,14 @@ pub mod calendar {
     where
         F: Fn(BiDay, BiDay) -> BiDay,
     {
-        let mut days_calendar = calendar.days_calendar.clone();
+        let mut days_calendar: Vec<(u16, Month, Vec<BiDay>)> = calendar.days_calendar.clone();
         days_calendar.sort_by_key(|&(year, month, _)| (year, month));
 
-        let mut res = Vec::new();
+        let mut res: Vec<(u16, Month, Vec<BiDay>)> = Vec::new();
         let mut curr_year: Year = 0;
         let mut curr_month: Option<Month> = None;
-        let mut curr_vec = Vec::new();
-        let mut curr_val = &curr_vec;
+        let mut curr_vec: Vec<BiDay> = Vec::new();
+        let mut curr_val: &Vec<BiDay> = &curr_vec;
 
         for &(year, month, ref vec) in &days_calendar {
             if year != curr_year || month != curr_month.unwrap() {
@@ -510,8 +512,8 @@ pub mod calendar {
                 curr_vec = normalize_biday(vec, curr_year, curr_month.unwrap()).clone();
                 curr_val = &curr_vec;
             } else {
-                let curr_val_norm = &normalize_biday(curr_val, curr_year, curr_month.unwrap());
-                let new_val = curr_val_norm.iter().zip(normalize_biday(vec, curr_year, curr_month.unwrap()).iter()).map(|(a, b)| op(*a, *b)).collect::<Vec<BiDay>>();
+                let curr_val_norm: &Vec<BiDay> = &normalize_biday(curr_val, curr_year, curr_month.unwrap());
+                let new_val: Vec<BiDay> = curr_val_norm.iter().zip(normalize_biday(vec, curr_year, curr_month.unwrap()).iter()).map(|(a, b)| op(*a, *b)).collect::<Vec<BiDay>>();
                 curr_vec = new_val;
                 curr_val = &curr_vec;
             }
@@ -554,14 +556,14 @@ pub mod calendar {
     /// Convert a DaysCalendar from Day days to BiDay days
     #[allow(dead_code)]
     pub fn from_day(calendar: DaysCalendar<Day>) -> DaysCalendar<BiDay> {
-        let mut result = DaysCalendar {
+        let mut result: DaysCalendar<BiDay> = DaysCalendar {
             days_calendar: Vec::new(),
         };
     
         for (year, month, days) in calendar.days_calendar {
             let n_days = days_in_month(year, month).unwrap_or(0);
           
-            let mut bi_days = vec![BiDay::Zero; n_days as usize];
+            let mut bi_days: Vec<BiDay> = vec![BiDay::Zero; n_days as usize];
           
             for day in days {
               let idx = day - 1;
@@ -605,7 +607,7 @@ pub mod calendar {
             self.sort();
     
             // Perform a binary search on days_calendar to find the given year and month
-            let index = self.days_calendar.binary_search_by(|&(y, m, _)| {
+            let index: Result<usize, usize> = self.days_calendar.binary_search_by(|&(y, m, _)| {
                 if y == year {
                     m.cmp(&month)
                 } else {
@@ -626,12 +628,12 @@ pub mod calendar {
     /// Converts a `DaysCalendar` into a `Date` vector
     #[allow(dead_code)]
     pub fn to_date(calendar: DaysCalendar<BiDay>) -> Vec<Date> {
-        let total_days = calendar
+        let total_days: usize = calendar
             .days_calendar
             .iter()
             .map(|(_, _, days)| days.iter().filter(|&day| *day == BiDay::One).count())
             .sum();
-        let mut dates = Vec::with_capacity(total_days);
+        let mut dates: Vec<Date> = Vec::with_capacity(total_days);
     
         for (year, month, days) in calendar.days_calendar {
             let year_num: Year = year;
@@ -653,7 +655,7 @@ pub mod calendar {
     #[allow(dead_code)]
     pub fn from_date(dates: Vec<Date>) -> DaysCalendar<Day> {
         // Create an orderly map for storing years, months and days
-        let mut year_month_map: BTreeMap<(Year, u8), Vec<Day>> = BTreeMap::new();
+        let mut year_month_map: super::BTreeMap<(Year, u8), Vec<Day>> = super::BTreeMap::new();
     
         // Iterate over the given dates and add them to the map
         for date in dates {
@@ -682,52 +684,247 @@ pub mod calendar {
         DaysCalendar { days_calendar }
     }
 
-        /// Groups calendar days by year and month
-        #[allow(dead_code)]
-        pub fn group_days_calendar<T: Clone>(calendar: DaysCalendar<T>) -> Vec<(Year, Month, Vec<Vec<T>>)> {
-            // Group days by year and month
-            let groups = calendar.days_calendar.iter().group_by(|(year, month, _)| (*year, *month));
+    /// Groups calendar days by year and month
+    #[allow(dead_code)]
+    pub fn group_days_calendar<T: Clone>(calendar: DaysCalendar<T>) -> Vec<(Year, Month, Vec<Vec<T>>)> {
+        // Group days by year and month
+        let groups = calendar.days_calendar.iter().group_by(|(year, month, _)| (*year, *month));
 
-            // Iterate on the groups and generate the new structure
-            let mut result = Vec::new();
-            for ((year, month), group) in groups.into_iter() {
-                let days: Vec<Vec<T>> = group.map(|(_, _, days)| days.clone()).collect();
-                result.push((year, month, days));
-            }
-
-            // Sort by year and month
-            result.sort_by(|(year1, month1, _), (year2, month2, _)| {
-                year1.cmp(year2).then_with(|| month1.cmp(month2))
-            });
-
-            result
+        // Iterate on the groups and generate the new structure
+        let mut result: Vec<(u16, Month, Vec<Vec<T>>)> = Vec::new();
+        for ((year, month), group) in groups.into_iter() {
+            let days: Vec<Vec<T>> = group.map(|(_, _, days)| days.clone()).collect();
+            result.push((year, month, days));
         }
 
-        /// Converts a BiDay DaysCalendar to a vector of days
-        pub fn biday_to_vec_day(calendar: DaysCalendar<BiDay>) -> Vec<(Year, Month, Vec<Day>)>
-        {
-            let mut result = Vec::new();
-            let mut vec_days = Vec::new();
+        // Sort by year and month
+        result.sort_by(|(year1, month1, _), (year2, month2, _)| {
+            year1.cmp(year2).then_with(|| month1.cmp(month2))
+        });
 
-            for (year, month, days) in calendar.days_calendar.iter() {
-                for (day, value) in days.iter().enumerate() {
-                    if *value == BiDay::One {
-                        vec_days.push(day as u8 + 1);
-                    }
+        result
+    }
+
+    /// Converts a BiDay DaysCalendar to a vector of days
+    pub fn biday_to_vec_day(calendar: DaysCalendar<BiDay>) -> Vec<(Year, Month, Vec<Day>)>
+    {
+        let mut result = Vec::new();
+        let mut vec_days = Vec::new();
+
+        for (year, month, days) in calendar.days_calendar.iter() {
+            for (day, value) in days.iter().enumerate() {
+                if *value == BiDay::One {
+                    vec_days.push(day as u8 + 1);
                 }
-                result.push((*year, *month as Month, vec_days.clone()));
-                vec_days = Vec::new();
             }
-
-            result
+            result.push((*year, *month as Month, vec_days.clone()));
+            vec_days = Vec::new();
         }
+
+        result
+    }    
 
 
 
 }
 
+pub mod abstracto {
+
+    use std::fmt;
+    use std::fmt::{Display, Formatter};
+
+    use crate::types::{
+        Year, Month, Day, BiDay, Weekday,
+        Date
+    };
+   
+    /// Enumeration of abstract calendar patterns
+    #[derive(Debug, Clone)]
+    pub enum CalendarPattern {
+        /// No calendar day
+        None,
+        
+        /// All calendar days
+        Everyday,
+
+        /// Only on odd days of the month
+        OddDays,
+    
+        /// Only on even days of the month
+        EvenDays,
+    
+        /// Calendar based on days of the week
+        /// Monday to Sunday
+        Weekdays(Vec<Weekday>),
+    
+        /// Only on specific days of the week
+        /// Customized days represented by numbers (1 = Monday, 7 = Sunday)
+        CustomWeekDays(Vec<u8>),
+
+        /// Personalized calendar based on the days of the month
+        /// From day 1 to day 30
+        CustomDays(Vec<Day>),
+    
+        /// A customized sequence of BiDays
+        CustomBiDay(Vec<BiDay>),
+    
+        /// Only on a specific day of the month, e.g., only on the 15th of each month
+        SpecificDayOfMonth(u8),
+    
+        /// Only days falling in a specific week of the month, e.g., the first week of the month
+        SpecificWeekOfMonth(u8),
+    
+        /// Fixed public holidays
+        FixedHolidays(Vec<Date>),
+    
+        /// Floating holidays
+        FloatingHolidays(Vec<Date>),
+    
+        // Seasonal patterns, e.g., summer or winter only
+        //Seasons(Vec<Season>), // definir un enum `Season` con opciones como `Spring`, `Summer`, etc.
+    
+        /// Only days that fall in a specific week of the year, e.g. week 10 of the year
+        SpecificWeekOfYear(u32),
+    
+        /// A pattern defined by a custom function
+        CustomFunction(fn(Year, Month, Day) -> BiDay),
+    
+        /// A pattern defined by a "cron" expression
+        CronPattern(String),
+    }
+
+    /// Enum for the abstract calendar, which can be a single pattern or a combined operation
+    /// Example of use for the calendar "working days":
+    /// Not(Or(Or(FestivosFijos, FestivosFlotantes), FinesDeSemana))
+    #[derive(Debug)]
+    pub enum AbstractCalendar {
+        Pattern(CalendarPattern),
+        Operation(CalendarOperation),
+    }
+
+    /// Enum for operators and transformations that can be applied to patterns
+    #[derive(Debug)]
+    pub enum CalendarOperation {
+        Invert(Box<AbstractCalendar>),                       // Inversión
+        And(Box<AbstractCalendar>, Box<AbstractCalendar>),   // Intersección
+        Or(Box<AbstractCalendar>, Box<AbstractCalendar>),    // Unión
+        Minus(Box<AbstractCalendar>, Box<AbstractCalendar>), // Sustracción
+    }
+
+    
+    impl AbstractCalendar {
+        // Function to combine two abstract calendars with the OR operator
+        pub fn or(self, other: AbstractCalendar) -> AbstractCalendar {
+            AbstractCalendar::Operation(CalendarOperation::Or(Box::new(self), Box::new(other)))
+        }
+    
+        // Function to combine two abstract calendars with the AND operator
+        pub fn and(self, other: AbstractCalendar) -> AbstractCalendar {
+            AbstractCalendar::Operation(CalendarOperation::And(Box::new(self), Box::new(other)))
+        }
+    
+        // Function to negate (NOT) or invert an abstract calendar
+        pub fn invert(self) -> AbstractCalendar {
+            AbstractCalendar::Operation(CalendarOperation::Invert(Box::new(self)))
+        }
+
+        fn pretty_print(&self, f: &mut fmt::Formatter, indent: usize) -> fmt::Result {
+            match self {
+                AbstractCalendar::Pattern(pattern) => {
+                    write!(f, "{:indent$}{}", "", pattern)
+                },
+                AbstractCalendar::Operation(op) => {
+                    op.pretty_print(f, indent)
+                }
+            }
+        }
+
+    }
 
 
+    impl fmt::Display for AbstractCalendar {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                AbstractCalendar::Pattern(pattern) => write!(f, "{}", pattern),
+                AbstractCalendar::Operation(op) => write!(f, "{}", op),
+            }
+        }
+    }
+    
+    impl Display for CalendarOperation {
+        fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+            self.pretty_print(f, 0)
+        }
+    }
+
+    impl CalendarOperation {
+        fn pretty_print(&self, f: &mut Formatter<'_>, indent: usize) -> fmt::Result {
+            match self {
+                CalendarOperation::Invert(op) => {
+                    writeln!(f, "{}Invert(", " ".repeat(indent))?;
+                    op.pretty_print(f, indent + 4)?;
+                    write!(f, "\n{})", " ".repeat(indent))
+                }
+                CalendarOperation::And(op1, op2) | CalendarOperation::Or(op1, op2) | CalendarOperation::Minus(op1, op2) => {
+                    let operator = match self {
+                        CalendarOperation::And(_, _) => "And",
+                        CalendarOperation::Or(_, _) => "Or",
+                        CalendarOperation::Minus(_, _) => "Minus",
+                        _ => unreachable!(),
+                    };
+                    
+                    writeln!(f, "{}{}(", " ".repeat(indent), operator)?;
+                    op1.pretty_print(f, indent + 4)?;
+                    writeln!(f, ",")?;
+                    op2.pretty_print(f, indent + 4)?;
+                    write!(f, "\n{})", " ".repeat(indent))
+                }
+            }
+        }
+    }
+
+    impl fmt::Display for CalendarPattern {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                CalendarPattern::Everyday => write!(f, "Everyday"),
+                CalendarPattern::Weekdays(weekdays) => {
+                    let weekdays_str: String = weekdays.iter()
+                        .map(|day: &Weekday| day.to_string())
+                        .collect::<Vec<String>>()
+                        .join(", ");
+                    write!(f, "Weekdays([{}])", weekdays_str)
+                },
+                CalendarPattern::CustomDays(days) => {
+                    let days_str: String = days.iter()
+                        .map(|day| day.to_string())
+                        .collect::<Vec<String>>()
+                        .join(", ");
+                    write!(f, "CustomDays([{}])", days_str)
+                },
+                CalendarPattern::CustomBiDay(bidays) => {
+                    let bidays_str: String = bidays.iter()
+                        .map(|biday: &BiDay| match biday {
+                            BiDay::Zero => "0",
+                            BiDay::One => "1",
+                        })
+                        .collect::<Vec<&str>>()
+                        .join(", ");
+                    write!(f, "CustomBiDay([{}])", bidays_str)
+                },
+                CalendarPattern::CronPattern(cron) => write!(f, "CronPattern(\"{}\")", cron),
+                _ => todo!(),
+            }
+        }
+    }
+    
+    
+    
+
+
+    
+
+
+}
 
 
 
