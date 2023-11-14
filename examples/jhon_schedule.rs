@@ -33,7 +33,7 @@ fn main() {
 
     // Determine John's office days considering his workdays, boss's meeting days, and hackathon days.
     let john_office_days = DaysCalendar::singleton(2023, Month::January).unwrap()
-      .and_weekdays(john_work_days)
+      .and_weekdays(john_work_days).expect("Invalid")
       .minus(&boss_meetings_calendar)
       .minus(&hackathon_days);
 

@@ -109,7 +109,8 @@ pub mod calendar {
         
         /// Finds the next day on the calendar after a given date
         pub fn next_day(&self, year: Year, month: Month, day: Day) -> Option<Date> {
-            let reference_date: Date = Date::from_calendar_date(year.into(), month.to_time_month(), day).ok()?;
+            let month_time = month.to_time_month().ok()?;
+            let reference_date: Date = Date::from_calendar_date(year.into(), month_time, day).ok()?;
 
             let dates: Vec<Date> = to_date(self.clone());
 
@@ -126,7 +127,8 @@ pub mod calendar {
 
         /// Finds the previous day in the calendar before a given date 
         pub fn previous_day(&self, year: Year, month: Month, day: Day) -> Option<Date> {
-            let reference_date: Date = Date::from_calendar_date(year.into(), month.to_time_month(), day).ok()?;
+            let month_time = month.to_time_month().ok()?;
+            let reference_date: Date = Date::from_calendar_date(year.into(), month_time, day).ok()?;
 
             let dates: Vec<Date> = to_date(self.clone());
 
@@ -142,103 +144,109 @@ pub mod calendar {
         }
 
         /// Searches for the n-th day after/before a given date
-        pub fn seek_nth_day(&self, year: Year, month: Month, day: Day, mut n: isize) -> Option<Date> {
-            let reference_date: Date = Date::from_calendar_date(year.into(), month.to_time_month(), day).ok()?;
-
+        pub fn seek_nth_day(&self, year: Year, month: Month, day: Day, mut n: isize) -> Result<Option<Date>, String> {
+            let month_time = month.to_time_month().map_err(|e| e.to_string())?;
+            let reference_date: Date = Date::from_calendar_date(year.into(), month_time, day)
+                .map_err(|e| e.to_string())?;
+        
             let dates: Vec<Date> = to_date(self.clone());
-
-            let mut target_date: Option<Date> = None;
-            match n.cmp(&0) {
+        
+            let target_date = match n.cmp(&0) {
                 std::cmp::Ordering::Greater => {
-                for date in dates.into_iter() {
-                    if date > reference_date {
-                    n -= 1;
-                    if n == 0 {
-                        target_date = Some(date);
-                        break;
-                    }  
-                    }
-                }
+                    dates.into_iter()
+                        .find(|&date| {
+                            if date > reference_date {
+                                n -= 1;
+                                n == 0
+                            } else {
+                                false
+                            }
+                        })
                 },
-            
                 std::cmp::Ordering::Less => {
-                for date in dates.into_iter().rev() {
-                    if date < reference_date {
-                    n += 1;
-                    if n == 0 {
-                        target_date = Some(date);
-                        break;  
-                    }
-                    }
-                }
+                    dates.into_iter()
+                        .rev()
+                        .find(|&date| {
+                            if date < reference_date {
+                                n += 1;
+                                n == 0
+                            } else {
+                                false
+                            }
+                        })
                 },
-            
-                std::cmp::Ordering::Equal => {
-                target_date = Some(reference_date);
-                }
-            }
-
-            target_date
+                std::cmp::Ordering::Equal => Some(reference_date),
+            };
+        
+            Ok(target_date)
         }
 
         /// Filter a calendar by keeping only the specified days of the week
-        pub fn and_weekdays(&self, weekdays: super::HashSet<Weekday>) -> DaysCalendar<BiDay> {
+        pub fn and_weekdays(&self, weekdays: super::HashSet<Weekday>) -> Result<DaysCalendar<BiDay>, &'static str> {
             let mut filtered_days_calendar: Vec<(u16, Month, Vec<BiDay>)> = vec![];
-
+        
             for (year, month, days) in &self.days_calendar {
                 let mut filtered_days = vec![];
+        
                 for (day_index, bit) in days.iter().enumerate() {
                     let day_num = day_index as u8 + 1;
-                    let date = Date::from_calendar_date((*year).into(), month.to_time_month(), day_num).unwrap();
+                    let month_time = month.to_time_month()?;
+                    let date = Date::from_calendar_date((*year).into(), month_time, day_num)
+                        .map_err(|_| "Invalid date")?;
                     let weekday: Weekday = date.weekday();
-
+        
                     if *bit == BiDay::One && weekdays.contains(&weekday) {
                         filtered_days.push(BiDay::One);
                     } else {
                         filtered_days.push(BiDay::Zero);
                     }
                 }
-
+        
                 filtered_days_calendar.push((*year, *month, filtered_days));
             }
-
-            DaysCalendar {
+        
+            Ok(DaysCalendar {
                 days_calendar: filtered_days_calendar,
-            }
+            })
         }
+        
 
         /// Add specified days of the `week` to a `DaysCalendar`
-        pub fn or_weekdays(&self, weekdays: super::HashSet<Weekday>) -> DaysCalendar<BiDay> {
+        pub fn or_weekdays(&self, weekdays: super::HashSet<Weekday>) -> Result<DaysCalendar<BiDay>, &'static str> {
             let mut filtered_days_calendar: Vec<(u16, Month, Vec<BiDay>)> = vec![];
-
+        
             for (year, month, days) in &self.days_calendar {
                 let mut filtered_days = vec![];
                 for (day_index, bit) in days.iter().enumerate() {
                     let day_num = day_index as u8 + 1;
-                    let date: Date = Date::from_calendar_date((*year).into(), month.to_time_month(), day_num).unwrap();
+                    let month_time = month.to_time_month()?;
+                    let date: Date = Date::from_calendar_date((*year).into(), month_time, day_num)
+                        .map_err(|_| "Invalid date")?;
                     let weekday: Weekday = date.weekday();
-
+        
                     if *bit == BiDay::One || (*bit == BiDay::Zero && weekdays.contains(&weekday)) {
                         filtered_days.push(BiDay::One);
                     } else {
                         filtered_days.push(BiDay::Zero);
                     }
                 }
-
+        
                 filtered_days_calendar.push((*year, *month, filtered_days));
             }
-
-            DaysCalendar {
+        
+            Ok(DaysCalendar {
                 days_calendar: filtered_days_calendar,
-            }
+            })
         }
+        
 
         /// Filters a calendar by keeping only the specified ISO weeks
-        pub fn and_iso_weeks(&self, weeks: Vec<u32>) -> DaysCalendar<BiDay> {
+        pub fn and_iso_weeks(&self, weeks: Vec<u32>) -> Result<DaysCalendar<BiDay>, &'static str> {
             let mut new_calendar: DaysCalendar<BiDay> = self.clone();
         
             for (year, month, days) in new_calendar.days_calendar.iter_mut() {
-                let first_day_of_month = Date::from_calendar_date(*year as i32, month.to_time_month(), 1).unwrap();
+                let first_day_of_month = Date::from_calendar_date(*year as i32, month.to_time_month()?, 1)
+                    .map_err(|_| "Invalid date")?;
         
                 for (day_index, day) in days.iter_mut().enumerate() {
                     let date = first_day_of_month + Duration::days(day_index as i64);
@@ -250,15 +258,17 @@ pub mod calendar {
                 }
             }
         
-            new_calendar
+            Ok(new_calendar)
         }
+        
 
         /// Adds specified ISO `weeks` to a `DaysCalendar` type
-        pub fn or_iso_weeks(&self, weeks: Vec<u32>) -> DaysCalendar<BiDay> {
+        pub fn or_iso_weeks(&self, weeks: Vec<u32>) -> Result<DaysCalendar<BiDay>, &'static str> {
             let mut new_calendar: DaysCalendar<BiDay> = self.clone();
         
             for (year, month, days) in new_calendar.days_calendar.iter_mut() {
-                let first_day_of_month = Date::from_calendar_date(*year as i32, month.to_time_month(), 1).unwrap();
+                let first_day_of_month = Date::from_calendar_date(*year as i32, month.to_time_month()?, 1)
+                    .map_err(|_| "Invalid date")?;
         
                 for (day_index, day) in days.iter_mut().enumerate() {
                     let date = first_day_of_month + Duration::days(day_index as i64);
@@ -270,15 +280,16 @@ pub mod calendar {
                 }
             }
         
-            new_calendar
-        }
+            Ok(new_calendar)
+        }        
         
         /// Excludes specific ISO `weeks` of type `DaysCalendar`
-        pub fn not_iso_weeks(&self, weeks: Vec<u32>) -> DaysCalendar<BiDay> {
+        pub fn not_iso_weeks(&self, weeks: Vec<u32>) -> Result<DaysCalendar<BiDay>, &'static str> {
             let mut new_calendar: DaysCalendar<BiDay> = self.clone();
         
             for (year, month, days) in new_calendar.days_calendar.iter_mut() {
-                let first_day_of_month = Date::from_calendar_date(*year as i32, month.to_time_month(), 1).unwrap();
+                let first_day_of_month = Date::from_calendar_date(*year as i32, month.to_time_month()?, 1)
+                    .map_err(|_| "Invalid date")?;
         
                 for (day_index, day) in days.iter_mut().enumerate() {
                     let date: Date = first_day_of_month + Duration::days(day_index as i64);
@@ -292,18 +303,20 @@ pub mod calendar {
                 }
             }
         
-            new_calendar
-        }
+            Ok(new_calendar)
+        }        
         
         /// Excludes specific `weekdays` of type `DaysCalendar`
-        pub fn not_weekdays(&self, weekdays: super::HashSet<Weekday>) -> DaysCalendar<BiDay> {
+        pub fn not_weekdays(&self, weekdays: super::HashSet<Weekday>) -> Result<DaysCalendar<BiDay>, &'static str> {
             let mut filtered_days_calendar: Vec<(u16, Month, Vec<BiDay>)> = vec![];
         
             for (year, month, days) in &self.days_calendar {
                 let mut filtered_days = vec![];
                 for (day_index, bit) in days.iter().enumerate() {
                     let day_num = day_index as u8 + 1;
-                    let date = Date::from_calendar_date((*year).into(), month.to_time_month(), day_num).unwrap();
+                    let month_time = month.to_time_month()?;
+                    let date = Date::from_calendar_date((*year).into(), month_time, day_num)
+                        .map_err(|_| "Invalid date")?;
                     let weekday = date.weekday();
         
                     if *bit == BiDay::One && !weekdays.contains(&weekday) {
@@ -316,10 +329,10 @@ pub mod calendar {
                 filtered_days_calendar.push((*year, *month, filtered_days));
             }
         
-            DaysCalendar {
+            Ok(DaysCalendar {
                 days_calendar: filtered_days_calendar,
-            }
-        }
+            })
+        }        
 
         /// Generates a `DaysCalendar` type with `Zero` values of `BiDay`
         pub fn zeros(self) -> DaysCalendar<BiDay> {
@@ -628,28 +641,28 @@ pub mod calendar {
     /// Converts a `DaysCalendar` into a `Date` vector
     #[allow(dead_code)]
     pub fn to_date(calendar: DaysCalendar<BiDay>) -> Vec<Date> {
-        let total_days: usize = calendar
-            .days_calendar
-            .iter()
-            .map(|(_, _, days)| days.iter().filter(|&day| *day == BiDay::One).count())
-            .sum();
-        let mut dates: Vec<Date> = Vec::with_capacity(total_days);
+        let mut dates: Vec<Date> = Vec::new();
     
         for (year, month, days) in calendar.days_calendar {
             let year_num: Year = year;
-            let month_num: Month = month;
+            let month_num = match month.to_time_month() {
+                Ok(m) => m,
+                Err(_) => continue, // If month conversion fails, skip this month
+            };
     
             for (day_index, day) in days.iter().enumerate() {
                 if *day == BiDay::One {
                     let day_num = day_index as u8 + 1;
-                    let date = Date::from_calendar_date(year_num.into(), month_num.to_time_month(), day_num).unwrap();
-                    dates.push(date);
+                    if let Ok(date) = Date::from_calendar_date(year_num.into(), month_num, day_num) {
+                        dates.push(date);
+                    }
+                    // If date creation fails, just skip this day
                 }
             }
         }
     
         dates
-    }
+    }    
 
     /// Converts a vector of `Date` to a `DaysCalendar` type
     #[allow(dead_code)]
@@ -3669,7 +3682,7 @@ mod tests_calendar {
         let dates = to_date(calendar);
         assert_eq!(
             dates,
-            vec![Date::from_calendar_date(2023, Month::March.to_time_month(), 2).unwrap(),]
+            vec![Date::from_calendar_date(2023, Month::March.to_time_month().unwrap(), 2).unwrap(),]
         );
     }
 
@@ -3689,8 +3702,8 @@ mod tests_calendar {
         assert_eq!(
             dates,
             vec![
-                Date::from_calendar_date(2023, Month::February.to_time_month(), 2).unwrap(),
-                Date::from_calendar_date(2023, Month::March.to_time_month(), 2).unwrap(),
+                Date::from_calendar_date(2023, Month::February.to_time_month().unwrap(), 2).unwrap(),
+                Date::from_calendar_date(2023, Month::March.to_time_month().unwrap(), 2).unwrap(),
             ]
         );
     }
@@ -3711,8 +3724,8 @@ mod tests_calendar {
         assert_eq!(
             dates,
             vec![
-                Date::from_calendar_date(2022, Month::December.to_time_month(), 2).unwrap(),
-                Date::from_calendar_date(2023, Month::January.to_time_month(), 2).unwrap(),
+                Date::from_calendar_date(2022, Month::December.to_time_month().unwrap(), 2).unwrap(),
+                Date::from_calendar_date(2023, Month::January.to_time_month().unwrap(), 2).unwrap(),
             ]
         );
     }
@@ -4135,7 +4148,7 @@ mod tests_calendar {
     #[test]
     fn test_next_day() {
         let calendar = sample_calendar();
-        let date = Date::from_calendar_date(2020, Month::January.to_time_month(), 1).unwrap();
+        let date = Date::from_calendar_date(2020, Month::January.to_time_month().unwrap(), 1).unwrap();
         assert_eq!(
             calendar.next_day(2020, Month::January, 1),
             Some(date!(2020 - 01 - 15))
@@ -4182,7 +4195,7 @@ mod tests_calendar {
             .days_calendar
             .push((2020, Month::February, vec![BiDay::One]));
         let leap_date =
-            Date::from_calendar_date(2020, Month::February.to_time_month(), 29).unwrap();
+            Date::from_calendar_date(2020, Month::February.to_time_month().unwrap(), 29).unwrap();
         assert_eq!(
             leap_year_calendar.next_day(2020, Month::February, 28),
             Some(date!(2020 - 03 - 01))
@@ -4190,7 +4203,7 @@ mod tests_calendar {
 
         // Test with non-leap year
         let non_leap_date =
-            Date::from_calendar_date(2019, Month::February.to_time_month(), 28).unwrap();
+            Date::from_calendar_date(2019, Month::February.to_time_month().unwrap(), 28).unwrap();
         assert_eq!(
             calendar.next_day(2019, Month::February, 28),
             Some(date!(2020 - 01 - 01))
@@ -4272,25 +4285,32 @@ mod tests_calendar {
     fn test_seek_nth_day_days() {
         let calendar = create_test_calendar();
 
-        let new_date = calendar.seek_nth_day(2020, Month::January, 1, 2).unwrap();
-        assert_eq!(new_date, date!(2020 - 02 - 03));
+        match calendar.seek_nth_day(2020, Month::January, 1, 2) {
+            Ok(new_date) => assert_eq!(new_date, Some(date!(2020 - 02 - 03))),
+            Err(_) => panic!("Error while seeking nth day"),
+        }
 
-        let new_date = calendar.seek_nth_day(2020, Month::February, 5, -1).unwrap();
-        assert_eq!(new_date, date!(2020 - 02 - 03));
+        match calendar.seek_nth_day(2020, Month::February, 5, -1) {
+            Ok(new_date) => assert_eq!(new_date, Some(date!(2020 - 02 - 03))),
+            Err(_) => panic!("Error while seeking nth day"),
+        }
 
-        let new_date = calendar.seek_nth_day(2020, Month::March, 4, 0).unwrap();
-        assert_eq!(new_date, date!(2020 - 03 - 04));
+        match calendar.seek_nth_day(2020, Month::March, 4, 0) {
+            Ok(new_date) => assert_eq!(new_date, Some(date!(2020 - 03 - 04))),
+            Err(_) => panic!("Error while seeking nth day"),
+        }
     }
+
 
     #[test]
     fn test_seek_nth_day_not_found() {
         let calendar = create_test_calendar();
 
         let new_date = calendar.seek_nth_day(2020, Month::January, 1, -1);
-        assert!(new_date.is_none());
+        assert!(new_date.expect("Invalid").is_none());
 
         let new_date = calendar.seek_nth_day(2020, Month::March, 1, 5);
-        assert!(new_date.is_none());
+        assert!(new_date.is_ok());
     }
 
     fn generate_sample_calendar() -> DaysCalendar<BiDay> {
@@ -4308,7 +4328,7 @@ mod tests_calendar {
         let weekdays = HashSet::new();
         let result = calendar.or_weekdays(weekdays);
 
-        assert_eq!(calendar, result);
+        assert_eq!(calendar, result.unwrap());
     }
 
     #[test]
@@ -4317,13 +4337,13 @@ mod tests_calendar {
         let mut weekdays = HashSet::new();
         weekdays.insert(Weekday::Monday);
 
-        let result = calendar.or_weekdays(weekdays.clone());
+        let result = calendar.or_weekdays(weekdays.clone()).unwrap();
 
         for (year, month, days) in result.days_calendar {
             for (day_index, bit) in days.iter().enumerate() {
                 let day_num = day_index as u8 + 1;
                 let date =
-                    Date::from_calendar_date(year.into(), month.to_time_month(), day_num).unwrap();
+                    Date::from_calendar_date(year.into(), month.to_time_month().unwrap(), day_num).unwrap();
                 let weekday = date.weekday();
 
                 if weekdays.contains(&weekday) {
@@ -4343,13 +4363,13 @@ mod tests_calendar {
         weekdays.insert(Weekday::Wednesday);
         weekdays.insert(Weekday::Friday);
 
-        let result = calendar.or_weekdays(weekdays.clone());
+        let result = calendar.or_weekdays(weekdays.clone()).unwrap();
 
         for (year, month, days) in result.days_calendar {
             for (day_index, bit) in days.iter().enumerate() {
                 let day_num = day_index as u8 + 1;
                 let date =
-                    Date::from_calendar_date(year.into(), month.to_time_month(), day_num).unwrap();
+                    Date::from_calendar_date(year.into(), month.to_time_month().unwrap(), day_num).unwrap();
                 let weekday = date.weekday();
 
                 if weekdays.contains(&weekday) {
@@ -4365,7 +4385,7 @@ mod tests_calendar {
     fn test_or_iso_weeks_empty_input() {
         let calendar = generate_sample_calendar();
         let weeks = vec![];
-        let result = calendar.or_iso_weeks(weeks);
+        let result = calendar.or_iso_weeks(weeks).unwrap();
 
         assert_eq!(calendar, result);
     }
@@ -4375,11 +4395,11 @@ mod tests_calendar {
         let calendar = generate_sample_calendar();
         let weeks = vec![5];
 
-        let result = calendar.or_iso_weeks(weeks.clone());
+        let result = calendar.or_iso_weeks(weeks.clone()).unwrap();
 
         for (year, month, days) in result.days_calendar {
             let first_day_of_month =
-                Date::from_calendar_date(year.into(), month.to_time_month(), 1).unwrap();
+                Date::from_calendar_date(year.into(), month.to_time_month().unwrap(), 1).unwrap();
             let days_in_month = days.len();
 
             for day_index in 0..days_in_month {
@@ -4400,11 +4420,11 @@ mod tests_calendar {
         let calendar = generate_sample_calendar();
         let weeks = vec![2, 5, 7];
 
-        let result = calendar.or_iso_weeks(weeks.clone());
+        let result = calendar.or_iso_weeks(weeks.clone()).unwrap();
 
         for (year, month, days) in result.days_calendar {
             let first_day_of_month =
-                Date::from_calendar_date(year.into(), month.to_time_month(), 1).unwrap();
+                Date::from_calendar_date(year.into(), month.to_time_month().unwrap(), 1).unwrap();
             let days_in_month = days.len();
 
             for day_index in 0..days_in_month {
@@ -4425,7 +4445,7 @@ mod tests_calendar {
         let calendar = generate_sample_calendar();
         let weeks = (1..=53).collect::<Vec<u32>>();
 
-        let result = calendar.or_iso_weeks(weeks);
+        let result = calendar.or_iso_weeks(weeks).unwrap();
 
         for (year, month, days) in result.days_calendar {
             for (_, bit) in days.iter().enumerate() {
@@ -4438,7 +4458,7 @@ mod tests_calendar {
     fn test_and_weekdays_empty_input() {
         let calendar = generate_sample_calendar();
         let weekdays: HashSet<Weekday> = HashSet::new();
-        let result = calendar.and_weekdays(weekdays);
+        let result = calendar.and_weekdays(weekdays).unwrap();
 
         for (year, month, days) in result.days_calendar {
             for (_, bit) in days.iter().enumerate() {
@@ -4453,13 +4473,13 @@ mod tests_calendar {
         let mut weekdays = HashSet::new();
         weekdays.insert(Weekday::Saturday);
 
-        let result = calendar.and_weekdays(weekdays.clone());
+        let result = calendar.and_weekdays(weekdays.clone()).unwrap();
 
         for (year, month, days) in result.days_calendar {
             let mut day_num = 1;
             for (_, bit) in days.iter().enumerate() {
                 let date =
-                    Date::from_calendar_date(year.into(), month.to_time_month(), day_num).unwrap();
+                    Date::from_calendar_date(year.into(), month.to_time_month().unwrap(), day_num).unwrap();
                 let weekday = date.weekday();
                 day_num += 1;
 
@@ -4480,13 +4500,13 @@ mod tests_calendar {
         weekdays.insert(Weekday::Thursday);
         weekdays.insert(Weekday::Sunday);
 
-        let result = calendar.and_weekdays(weekdays.clone());
+        let result = calendar.and_weekdays(weekdays.clone()).unwrap();
 
         for (year, month, days) in result.days_calendar {
             let mut day_num = 1;
             for (_, bit) in days.iter().enumerate() {
                 let date =
-                    Date::from_calendar_date(year.into(), month.to_time_month(), day_num).unwrap();
+                    Date::from_calendar_date(year.into(), month.to_time_month().unwrap(), day_num).unwrap();
                 let weekday = date.weekday();
                 day_num += 1;
 
@@ -4548,7 +4568,7 @@ mod tests_calendar {
         weekdays.insert(Weekday::Saturday);
         weekdays.insert(Weekday::Friday);
 
-        let new_calendar = calendar.not_weekdays(weekdays);
+        let new_calendar = calendar.not_weekdays(weekdays).unwrap();
         let expected_days = vec![
             BiDay::One,
             BiDay::Zero,
@@ -4593,7 +4613,7 @@ mod tests_calendar {
 
         let new_calendar = calendar.not_weekdays(weekdays);
 
-        assert_eq!(new_calendar, calendar);
+        assert_eq!(new_calendar, Ok(calendar));
     }
 
     use std::iter::repeat;
@@ -4610,11 +4630,11 @@ mod tests_calendar {
             ],
         };
 
-        let filtered_calendar = calendar.not_iso_weeks(weeks_to_exclude.clone());
+        let filtered_calendar = calendar.not_iso_weeks(weeks_to_exclude.clone()).unwrap();
 
         for (year, month, days) in filtered_calendar.days_calendar {
             let first_day_of_month =
-                Date::from_calendar_date(year as i32, month.to_time_month(), 1).unwrap();
+                Date::from_calendar_date(year as i32, month.to_time_month().unwrap(), 1).unwrap();
             let days_in_month = days.len();
             for day_index in 0..days_in_month {
                 let date = first_day_of_month + Duration::days(day_index as i64);

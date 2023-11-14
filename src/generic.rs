@@ -63,9 +63,10 @@ pub mod types {
                 _ => None,
             }
         }
+
         /// Converts `Month` type to `TimeMonth` type
-        pub fn to_time_month(&self) -> TimeMonth {
-            TimeMonth::try_from(self.to_index()).expect("Invalid month index")
+        pub fn to_time_month(&self) -> Result<TimeMonth, &'static str> {
+            TimeMonth::try_from(self.to_index()).map_err(|_| "Invalid month index")
         }
 
         pub fn next(&self) -> Option<Self> {
@@ -169,6 +170,7 @@ pub mod types {
             }
         }
         /// Convert types from u8 to BiDay
+        //#[flux::sig(fn(value: u8{v: v == 0 || v == 1}) -> Option<BiDay>)]
         pub fn from_u8(value: u8) -> Option<BiDay> {
             match value {
                 0 => Some(BiDay::Zero),
@@ -983,10 +985,10 @@ mod tests_generic_types {
 
     #[test]
     fn test_month_to_time_month() {
-        assert_eq!(Month::January.to_time_month(), TimeMonth::January);
-        assert_eq!(Month::February.to_time_month(), TimeMonth::February);
+        assert_eq!(Month::January.to_time_month(), Ok(TimeMonth::January));
+        assert_eq!(Month::February.to_time_month(), Ok(TimeMonth::February));
         // ... similar assertions for all months ...
-        assert_eq!(Month::December.to_time_month(), TimeMonth::December);
+        assert_eq!(Month::December.to_time_month(), Ok(TimeMonth::December));
     }
 
     #[test]
@@ -1250,8 +1252,8 @@ mod tests_generic_types {
 
     #[test]
     fn test_month_to_time_month_2() {
-        assert_eq!(Month::January.to_time_month(), TimeMonth::January);
-        assert_eq!(Month::December.to_time_month(), TimeMonth::December);
+        assert_eq!(Month::January.to_time_month(), Ok(TimeMonth::January));
+        assert_eq!(Month::December.to_time_month(), Ok(TimeMonth::December));
     }
 
     #[test]
