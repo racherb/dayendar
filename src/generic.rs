@@ -72,7 +72,7 @@ pub mod types {
         pub fn next(&self) -> Option<Self> {
             match self {
                 Month::December => None,
-                _ => Some(unsafe { std::mem::transmute((*self as u8) + 1) }),
+                _ => Some(Month::from_index(self.to_index() + 1)?),
             }
         }
     
@@ -122,7 +122,7 @@ pub mod types {
     }
 
     impl FromStr for Month {
-        type Err = ();
+        type Err = String;
 
         /// Converts a string representation of a month into a `Month`.
         /// 
@@ -147,7 +147,7 @@ pub mod types {
                 "oct" | "october" | "10" => Ok(Month::October),
                 "nov" | "november" | "11" => Ok(Month::November),
                 "dec" | "december" | "12" => Ok(Month::December),
-                _ => Err(()),
+                _ => Err(format!("Invalid month representation: {}", s)),
             }
         }
     }
@@ -1260,8 +1260,8 @@ mod tests_generic_types {
     fn test_month_from_str() {
         assert_eq!(Month::from_str("jan"), Ok(Month::January));
         assert_eq!(Month::from_str("december"), Ok(Month::December));
-        assert_eq!(Month::from_str("13"), Err(()));
-        assert_eq!(Month::from_str("invalid"), Err(()));
+        assert!(Month::from_str("13").is_err());
+        assert!(Month::from_str("invalid").is_err());
     }
 
     #[test]
