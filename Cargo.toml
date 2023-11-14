@@ -54,8 +54,8 @@ path = "examples/date_span.rs"
 [profile.dev]
 debug = true
 
-[features]
-default = []
+[package.metadata.flux]
+enabled = true
 
 [profile.release]
 opt-level = 3
